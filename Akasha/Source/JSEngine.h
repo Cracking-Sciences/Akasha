@@ -8,7 +8,8 @@ namespace Akasha {
 		double sampleRate; // sample rate
 		double time; // time
 		int note; // note
-		// std::array<double(&)(double), 4> lfoFuncs; // lfo functions
+		// std::array<double(&)(double), 4> lfoFuncs; // TODO: lfo functions
+		// TODO: MPE
 	};
 }
 
