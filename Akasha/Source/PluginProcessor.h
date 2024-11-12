@@ -14,6 +14,21 @@
 //==============================================================================
 /**
 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class AkashaAudioProcessor  : public juce::AudioProcessor
 {
 public:
@@ -54,8 +69,12 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+	//==============================================================================
+	Akasha::JSEngine& getJSEngine() { return jsEngine; }
+
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AkashaAudioProcessor)
 	Akasha::JSEngine jsEngine;
+    double bpm = 0.;
 };

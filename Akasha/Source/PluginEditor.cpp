@@ -8,20 +8,24 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "JSEngine.h"
 
 //==============================================================================
-AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p)
-	: AudioProcessorEditor(&p), audioProcessor(p),codeDocument(),
+AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p) :
+	AudioProcessorEditor(&p),
+	audioProcessor(p),
+	codeDocument(),
 	codeTokeniser(),
-	formulaEditorPointer(std::make_unique<Akasha::FormulaEditor>(codeDocument, &codeTokeniser)),
+	formulaEditorPointer(std::make_unique<Akasha::FormulaEditor>(codeDocument, &codeTokeniser, audioProcessor.getJSEngine())),
 	formulaEditor(*formulaEditorPointer) {
 	setLookAndFeel(&customLookAndFeel);
 
 	// several sliders.
 	for (int i = 0; i < 8; ++i) {
-		auto* sliderWithLabel = new Akasha::SliderWithLabel("m" + juce::String(i + 1));
+		auto* sliderWithLabel = new Akasha::SliderWithLabel("m" + juce::String(i));
 		addAndMakeVisible(sliderWithLabel);
 		macroSliders.add(sliderWithLabel);
+		sliderWithLabel->getSlider().addListener(this);
 	}
 
 	// code editor.
@@ -31,7 +35,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p)
 
 	// console.
 	code_console.setMultiLine(true);
-	code_console.setReadOnly(true); 
+	code_console.setReadOnly(true);
 	code_console.setReturnKeyStartsNewLine(true);
 	code_console.setScrollbarsShown(true);
 	code_console.setFont(juce::Font(juce::Font::getDefaultMonospacedFontName(), 15.0f, juce::Font::plain));
@@ -75,4 +79,28 @@ void AkashaAudioProcessorEditor::resized() {
 	mainFlexBox.items.add(juce::FlexItem(macroSlidersBox).withMinHeight(80.f));
 
 	mainFlexBox.performLayout(getLocalBounds());
+}
+
+void AkashaAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) {
+	// Handle slider value change
+	std::array<double, 8> macros;
+	for (int i = 0; i < macroSliders.size(); ++i) {
+		if (slider == &macroSliders[i]->getSlider()) {
+			// Do something with the slider value
+		}
+		macros[i] = macroSliders[i]->getSlider().getValue();
+	}
+	Akasha::JSFuncParams params(macros, 120.0, 44100.0, 0.0, 50);
+	std::vector<double> result_vector;
+	result_vector.resize(2);
+	juce::String info;
+	if (audioProcessor.getJSEngine().callFunction(params, result_vector, info)) {
+		code_console.setText(
+			juce::String("Result: ") 
+			+ juce::String(result_vector[0])
+		);
+	}
+	else {
+		code_console.setText(info);
+	}
 }

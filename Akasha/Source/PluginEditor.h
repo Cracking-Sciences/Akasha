@@ -54,16 +54,20 @@ private:
 
 class FormulaEditor : public juce::CodeEditorComponent{
 public:
-	FormulaEditor(juce::CodeDocument& document, juce::CodeTokeniser* codeTokeniser):
-		juce::CodeEditorComponent(document, codeTokeniser){
+	FormulaEditor(juce::CodeDocument& document, juce::CodeTokeniser* codeTokeniser, Akasha::JSEngine& engine):
+		juce::CodeEditorComponent(document, codeTokeniser), jsEngine(engine){
 		setFont(juce::Font(juce::Font::getDefaultMonospacedFontName(), 15.0f, juce::Font::plain));
 		setTabSize(4, true);
 	}
 
 	bool keyPressed(const juce::KeyPress& key) override {
 		if (key == juce::KeyPress(juce::KeyPress::returnKey, juce::ModifierKeys::shiftModifier, NULL)) {
-			if (console != nullptr) {
-				console->setText(getText());
+			juce::String info;
+			if (!jsEngine.loadFunction(getText().toStdString(), info)) {
+				giveInfo(info);
+			}
+			else {
+				giveInfo("Compiled OK :D");
 			}
 			return true;
 		}
@@ -81,14 +85,21 @@ public:
 		loadContent(newText);
 	}
 
+
 private:
+	void giveInfo(juce::String info) {
+		if (console != nullptr) {
+			console->setText(info);
+		}
+	}
 	juce::TextEditor* console = nullptr; // debug purpose.
+	Akasha::JSEngine& jsEngine;
 };
 
 
 }
 
-class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor {
+class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Slider::Listener {
 public:
 	AkashaAudioProcessorEditor(AkashaAudioProcessor&);
 	~AkashaAudioProcessorEditor() override;
@@ -96,6 +107,8 @@ public:
 	//==============================================================================
 	void paint(juce::Graphics&) override;
 	void resized() override;
+
+	void sliderValueChanged(juce::Slider* slider) override;
 
 private:
 	// This reference is provided as a quick way for your editor to
