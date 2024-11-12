@@ -4,9 +4,20 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginCharacteristicsValue="pluginIsSynth">
   <MAINGROUP id="LKIRRr" name="Akasha">
     <GROUP id="{3A77558B-6FCD-E060-4D31-37E331F68564}" name="Source">
+      <GROUP id="{A338E764-04E7-6973-3AB0-22A9C378D2F2}" name="assets">
+        <GROUP id="{CAAAE4B0-25ED-AD0A-9926-74DEFC6578A0}" name="JsTokeniser">
+          <FILE id="h1u55P" name="JavascriptCodeTokeniser.cpp" compile="1" resource="0"
+                file="Source/assets/JsTokeniser/JavascriptCodeTokeniser.cpp"/>
+          <FILE id="jS95cC" name="JavascriptCodeTokeniser.h" compile="0" resource="0"
+                file="Source/assets/JsTokeniser/JavascriptCodeTokeniser.h"/>
+        </GROUP>
+        <GROUP id="{7F17110C-7ECA-BF26-8316-368C0E3AC6AE}" name="fonts">
+          <FILE id="biJqLT" name="din.h" compile="0" resource="0" file="Source/assets/fonts/din.h"/>
+          <FILE id="PLMTlr" name="din.cpp" compile="1" resource="0" file="Source/assets/fonts/din.cpp"/>
+        </GROUP>
+      </GROUP>
+      <FILE id="GCidcQ" name="MyLookAndFeel.h" compile="0" resource="0" file="Source/MyLookAndFeel.h"/>
       <FILE id="fMFupV" name="JSEngine.h" compile="0" resource="0" file="Source/JSEngine.h"/>
-      <FILE id="biJqLT" name="din.h" compile="0" resource="0" file="Source/assets/fonts/din.h"/>
-      <FILE id="PLMTlr" name="din.cpp" compile="1" resource="0" file="Source/assets/fonts/din.cpp"/>
       <FILE id="JpR7IF" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="hdgULS" name="PluginProcessor.h" compile="0" resource="0"
@@ -33,15 +44,13 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <VS2022 targetFolder="Builds/VisualStudio2022" extraDefs="_ITERATOR_DEBUG_LEVEL=0&#10;V8_COMPRESS_POINTERS&#10;"
-            extraCompilerFlags="/std:c++20&#10;/Zc:__cplusplus">
+    <VS2022 targetFolder="Builds/VisualStudio2022" extraCompilerFlags="/std:c++20&#10;/Zc:__cplusplus">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Akasha" headerPath="D:\__GitRepos\Akasha\Akasha\V8\include"
-                       libraryPath="D:\__GitRepos\Akasha\Akasha\V8\library" winWarningLevel="3"
-                       extraLinkerFlags="v8_monolith.lib" useRuntimeLibDLL="0"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Akasha" winWarningLevel="3"
+                       useRuntimeLibDLL="0" defines="_ITERATOR_DEBUG_LEVEL=2"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Akasha" headerPath="D:\__GitRepos\Akasha\Akasha\V8\include"
                        libraryPath="D:\__GitRepos\Akasha\Akasha\V8\library" winWarningLevel="3"
-                       extraLinkerFlags="v8_monolith.lib" useRuntimeLibDLL="0"/>
+                       extraLinkerFlags="v8_monolith.lib" useRuntimeLibDLL="0" defines="_ITERATOR_DEBUG_LEVEL=0&#10;V8_COMPRESS_POINTERS&#10;"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../JUCE/modules"/>

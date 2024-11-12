@@ -11,7 +11,10 @@
 
 //==============================================================================
 AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p)
-	: AudioProcessorEditor(&p), audioProcessor(p) {
+	: AudioProcessorEditor(&p), audioProcessor(p),codeDocument(),
+	codeTokeniser(),
+	formulaEditorPointer(std::make_unique<Akasha::FormulaEditor>(codeDocument, &codeTokeniser)),
+	formulaEditor(*formulaEditorPointer) {
 	setLookAndFeel(&customLookAndFeel);
 
 	// several sliders.
