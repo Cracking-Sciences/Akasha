@@ -5,11 +5,18 @@ namespace Akasha {
 	struct JSFuncParams {
 		std::array<double, 8>& macros; // macros
 		double tempo; // tempo
+		double beat;
 		double sampleRate; // sample rate
 		double time; // time
-		int note; // note
+
 		// std::array<double(&)(double), 4> lfoFuncs; // TODO: lfo functions
 		// TODO: MPE
+		int note; // note
+		float velocity; // velocity
+
+		JSFuncParams(std::array<double, 8>& macrosRef)
+			: macros(macrosRef), tempo(0.0), beat(0.0), sampleRate(0.0), time(0.0), note(0), velocity(0.0f) {
+		}
 	};
 }
 
@@ -52,13 +59,21 @@ namespace Akasha {
 			v8::V8::Initialize();
 			create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 			isolate = v8::Isolate::New(create_params);
+
+			cached_context_list.resize(num_cached_contexts);
+			cached_global_list.resize(num_cached_contexts);
+
 		}
 
 		~JSEngine() {
 			context.Reset();
 			function.Reset();
-			cached_context.Reset();
-			cached_global.Reset();
+			for (auto& cached_context : cached_context_list) {
+				cached_context.Reset();
+			}
+			for (auto& cached_global : cached_global_list) {
+				cached_global.Reset();
+			}
 			isolate->Dispose();
 			v8::V8::Dispose();
 			v8::V8::DisposePlatform();
@@ -103,16 +118,25 @@ namespace Akasha {
 			function.Reset(isolate, func_value.As<v8::Function>());
 
 			// Cache the context and global object as persistent handles
-			cached_context.Reset(isolate, context.Get(isolate));
-			cached_global.Reset(isolate, cached_context.Get(isolate)->Global());
-
+			for (int i = 0; i < num_cached_contexts; i++) {
+				cached_context_list[i].Reset(isolate, context.Get(isolate));
+				cached_global_list[i].Reset(isolate, cached_context_list[i].Get(isolate)->Global());
+			}
+			// cached_context.Reset(isolate, context.Get(isolate));
+			// cached_global.Reset(isolate, cached_context.Get(isolate)->Global());
+			function_ready = true;
 			return true;
 		}
 
-		bool callFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info) {
+		bool callFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId = 0) {
 			// if there is a problem (return false), the info will be filled with the error message.
+			voiceId = voiceId % num_cached_contexts;
+			v8::Global<v8::Context>& cached_context = cached_context_list[voiceId];
+			v8::Global<v8::Object>& cached_global = cached_global_list[voiceId];
+
 			if (cached_context.IsEmpty()) {
 				info = juce::String("Not compiled.\n");
+				function_ready = false;
 				return false;
 			}
 			v8::Isolate::Scope isolate_scope(isolate);
@@ -131,33 +155,46 @@ namespace Akasha {
 			if (!function.Get(isolate)->Call(cached_context.Get(isolate), cached_global.Get(isolate), 1, js_func_args).ToLocal(&result)) {
 				v8::String::Utf8Value error(isolate, try_catch.Exception());
 				std::string error_str(*error);
-				info = juce::String(error_str);
+				info = juce::String(error_str)+"\n";
 				// std::cerr << "JavaScript Error: " << *error << std::endl;
 				try_catch.Reset();
+				function_ready = false;
 				return false;
 			}
 
 			if (result->IsArray()) {
 				v8::Local<v8::Array> result_array = result.As<v8::Array>();
 				uint32_t length = result_array->Length();
-				for (uint32_t i = 0; i < length && i < result_vector.size(); i++) {
-					v8::Local<v8::Value> element;
-					if (result_array->Get(cached_context.Get(isolate), i).ToLocal(&element)) {
-						if (element->IsNumber()) {
-							result_vector[i] = element->NumberValue(cached_context.Get(isolate)).ToChecked();
+				for (uint32_t i = 0; i < result_vector.size(); i++) {
+					if (i < length) {
+						v8::Local<v8::Value> element;
+						if (result_array->Get(cached_context.Get(isolate), i).ToLocal(&element)) {
+							if (element->IsNumber()) {
+								result_vector[i] = element->NumberValue(cached_context.Get(isolate)).ToChecked();
+							}
+							else {
+								result_vector[i] = 0.0; // Default to 0.0 if not a number
+							}
 						}
-						else {
-							result_vector[i] = 0.0; // Default to 0.0 if not a number
-						}
+					}
+					else {
+						result_vector[i] = result_vector[0]; // Default to the first element if out of bounds
 					}
 				}
 			}else if (result->IsNumber()) {
-				result_vector[0] = (result->NumberValue(cached_context.Get(isolate)).ToChecked());
+				for (uint32_t i = 0; i < result_vector.size(); i++) {
+					result_vector[i] = (result->NumberValue(cached_context.Get(isolate)).ToChecked());
+				}
 			}else {
 				info = juce::String("Result is not an array or a number.\n");
 				return false;
 			}
+			function_ready = true;
 			return true;
+		}
+
+		bool isFunctionReady() const {
+			return function_ready;
 		}
 
 	private:
@@ -169,9 +206,11 @@ namespace Akasha {
 			}
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "macros").ToLocalChecked(), jsMacros).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "tempo").ToLocalChecked(), v8::Number::New(isolate, params.tempo)).Check();
+			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "beat").ToLocalChecked(), v8::Number::New(isolate, params.beat)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "sampleRate").ToLocalChecked(), v8::Number::New(isolate, params.sampleRate)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "time").ToLocalChecked(), v8::Number::New(isolate, params.time)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "note").ToLocalChecked(), v8::Number::New(isolate, params.note)).Check();
+			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "velocity").ToLocalChecked(), v8::Number::New(isolate, params.velocity)).Check();
 			return jsObject;
 		}
 
@@ -182,8 +221,12 @@ namespace Akasha {
 		v8::Global<v8::Function> function;
 
 		// Cache as persistent handles for memory safety
-		v8::Global<v8::Context> cached_context;
-		v8::Global<v8::Object> cached_global;
+		std::vector<v8::Global<v8::Context>> cached_context_list;
+		std::vector<v8::Global<v8::Object>> cached_global_list;
+
+		const int num_cached_contexts = 16;
+
+		bool function_ready = false;
 	};
 }
 #endif

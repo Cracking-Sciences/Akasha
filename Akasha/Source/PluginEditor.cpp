@@ -10,6 +10,44 @@
 #include "PluginEditor.h"
 #include "JSEngine.h"
 
+const char* javascriptCode = R"(// javascripts here
+function midiNoteToFreq(note){
+    if (note < 0 || note > 127) {
+        return 0;
+    }
+    const A4 = 440;
+    const A4_note = 69;
+    return A4 * Math.pow(2, (note - A4_note)/12);
+}
+
+var dcBlockerLastInput = 0;
+var dcBlockerLastOutput = 0;
+function dcBlocker(input, alpha=0.995){
+    const output = input - dcBlockerLastInput + alpha * dcBlockerLastOutput;
+    dcBlockerLastInput = input;
+    dcBlockerLastOutput = output;
+    return output;
+}
+
+
+function main(args){
+    var macros = args.macros;
+    var tempo = args.tempo;
+    var sampleRate = args.sampleRate;
+    var time = args.time;
+    var beat = args.beat;
+    var note = args.note;
+    var velocity = args.velocity;
+    // calc freq
+    var freq = midiNoteToFreq(note);
+
+    var output = time * freq % 1 * 0.5;
+    output = dcBlocker(output);
+    return output;
+}
+
+)";
+
 //==============================================================================
 AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p) :
 	AudioProcessorEditor(&p),
@@ -29,7 +67,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p) 
 	}
 
 	// code editor.
-	formulaEditor.setText("// javascripts here\n");
+	formulaEditor.setText(javascriptCode);
 	formulaEditor.setConsole(&code_console);
 	addAndMakeVisible(formulaEditor);
 
@@ -45,6 +83,15 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p) 
 	setSize(600, 400);
 	setResizable(true, true);
 	setResizeLimits(600, 400, std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+
+	// processor
+	for (auto voice_ptr : audioProcessor.getVoices()) {
+		voice_ptr->setConsole(&code_console);
+	}
+
+	// First Compile
+	juce::KeyPress shiftEnterKeyPress(juce::KeyPress::returnKey, juce::ModifierKeys::shiftModifier, 0);
+	formulaEditor.keyPressed(shiftEnterKeyPress);
 }
 
 AkashaAudioProcessorEditor::~AkashaAudioProcessorEditor() {
@@ -83,24 +130,12 @@ void AkashaAudioProcessorEditor::resized() {
 
 void AkashaAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) {
 	// Handle slider value change
-	std::array<double, 8> macros;
+    std::array<double, 8> macros = {0.0};
 	for (int i = 0; i < macroSliders.size(); ++i) {
 		if (slider == &macroSliders[i]->getSlider()) {
 			// Do something with the slider value
 		}
 		macros[i] = macroSliders[i]->getSlider().getValue();
 	}
-	Akasha::JSFuncParams params(macros, 120.0, 44100.0, 0.0, 50);
-	std::vector<double> result_vector;
-	result_vector.resize(2);
-	juce::String info;
-	if (audioProcessor.getJSEngine().callFunction(params, result_vector, info)) {
-		code_console.setText(
-			juce::String("Result: ") 
-			+ juce::String(result_vector[0])
-		);
-	}
-	else {
-		code_console.setText(info);
-	}
+	audioProcessor.setMacros(macros);
 }

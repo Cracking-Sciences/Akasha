@@ -123,7 +123,7 @@ private:
 	std::unique_ptr<Akasha::FormulaEditor> formulaEditorPointer;
 	Akasha::FormulaEditor& formulaEditor;
 	// code console.
-	juce::TextEditor code_console;      
+	juce::TextEditor code_console;
 	Akasha::CustomLookAndFeel customLookAndFeel;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AkashaAudioProcessorEditor)
 };
