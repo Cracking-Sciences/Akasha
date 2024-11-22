@@ -48,7 +48,6 @@ function main(args){
 
 )";
 
-//==============================================================================
 AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p) :
 	AudioProcessorEditor(&p),
 	audioProcessor(p),
@@ -98,7 +97,6 @@ AkashaAudioProcessorEditor::~AkashaAudioProcessorEditor() {
 	setLookAndFeel(nullptr);
 }
 
-//==============================================================================
 void AkashaAudioProcessorEditor::paint(juce::Graphics& g) {
 	g.fillAll(juce::Colours::darkgrey);
 }
@@ -130,7 +128,7 @@ void AkashaAudioProcessorEditor::resized() {
 
 void AkashaAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) {
 	// Handle slider value change
-    std::array<double, 8> macros = {0.0};
+	std::array<double, 8> macros = { 0.0 };
 	for (int i = 0; i < macroSliders.size(); ++i) {
 		if (slider == &macroSliders[i]->getSlider()) {
 			// Do something with the slider value

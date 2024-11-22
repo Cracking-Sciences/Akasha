@@ -1,15 +1,6 @@
-/*
-  ==============================================================================
-
-	This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
 AkashaAudioProcessor::AkashaAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
 	: AudioProcessor(BusesProperties()
@@ -33,7 +24,6 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 AkashaAudioProcessor::~AkashaAudioProcessor() {
 }
 
-//==============================================================================
 const juce::String AkashaAudioProcessor::getName() const {
 	return JucePlugin_Name;
 }
@@ -85,10 +75,7 @@ const juce::String AkashaAudioProcessor::getProgramName(int index) {
 void AkashaAudioProcessor::changeProgramName(int index, const juce::String& newName) {
 }
 
-//==============================================================================
 void AkashaAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	// Use this method as the place to do any pre-playback
-	// initialisation that you need..
 	synth.setCurrentPlaybackSampleRate(sampleRate);
 
 }
@@ -146,16 +133,14 @@ void AkashaAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
 }
 
-//==============================================================================
 bool AkashaAudioProcessor::hasEditor() const {
-	return true; // (change this to false if you choose to not supply an editor)
+	return true;
 }
 
 juce::AudioProcessorEditor* AkashaAudioProcessor::createEditor() {
 	return new AkashaAudioProcessorEditor(*this);
 }
 
-//==============================================================================
 void AkashaAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
 	// You should use this method to store your parameters in the memory block.
 	// You could do that either as raw data, or use the XML or ValueTree classes
@@ -167,7 +152,6 @@ void AkashaAudioProcessor::setStateInformation(const void* data, int sizeInBytes
 	// whose contents will have been created by the getStateInformation() call.
 }
 
-//==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 	return new AkashaAudioProcessor();
