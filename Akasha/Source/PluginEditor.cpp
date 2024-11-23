@@ -49,7 +49,10 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	addAndMakeVisible(formulaEditor);
 
 	// main editor.
-	setSize(800, 600);
+	int savedWidth = valueTreeState.getParameterAsValue("editorWidth").getValue();
+	int savedHeight = valueTreeState.getParameterAsValue("editorHeight").getValue();
+
+	setSize(savedWidth, savedHeight);
 	setResizable(true, true);
 	setResizeLimits(600, 400, std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 
@@ -58,11 +61,14 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 		voice_ptr->setConsole(&code_console);
 	}
 	// read other states
-	setCodeString(audioProcessor.savedCode);    
+	setCodeString(audioProcessor.savedCode);
 	setMacroText(audioProcessor.savedMacroText);
 }
 
 AkashaAudioProcessorEditor::~AkashaAudioProcessorEditor() {
+	// report current texts before closing.
+	audioProcessor.savedCode = getCodeString();
+	audioProcessor.savedMacroText = getMacroText();
 	setLookAndFeel(nullptr);
 }
 
@@ -70,6 +76,12 @@ void AkashaAudioProcessorEditor::paint(juce::Graphics& g) {
 	g.fillAll(juce::Colours::darkgrey);
 }
 
+void AkashaAudioProcessorEditor::mouseDown(const juce::MouseEvent& event) {
+	if (!formulaEditor.getBounds().contains(event.getPosition())) {
+		formulaEditor.unfocusAllComponents();
+	}
+	AudioProcessorEditor::mouseDown(event);
+}
 void AkashaAudioProcessorEditor::resized() {
 	juce::FlexBox mainFlexBox;
 	juce::FlexBox macroSlidersBox;
@@ -79,8 +91,10 @@ void AkashaAudioProcessorEditor::resized() {
 
 	textEditorBox.flexDirection = juce::FlexBox::Direction::column;
 	textEditorBox.justifyContent = juce::FlexBox::JustifyContent::center;
-	textEditorBox.items.add(juce::FlexItem(formulaEditor).withFlex(1.0f));
-	textEditorBox.items.add(juce::FlexItem(code_console).withMinHeight(40.0f));
+	textEditorBox.items.add(juce::FlexItem(formulaEditor).withFlex(1.0f)
+		.withMargin(juce::FlexItem::Margin(0.0f)));
+	textEditorBox.items.add(juce::FlexItem(code_console).withMinHeight(40.0f)
+		.withMargin(juce::FlexItem::Margin(0.0f)));
 
 	macroSlidersBox.flexDirection = juce::FlexBox::Direction::row;
 	macroSlidersBox.flexWrap = juce::FlexBox::Wrap::wrap;
@@ -92,5 +106,8 @@ void AkashaAudioProcessorEditor::resized() {
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));
 	mainFlexBox.items.add(juce::FlexItem(macroSlidersBox).withMinHeight(100.f));
 
-	mainFlexBox.performLayout(getLocalBounds());
+	mainFlexBox.performLayout(getLocalBounds().reduced(3.0f));
+
+	valueTreeState.getParameterAsValue("editorWidth").setValue(getWidth());
+	valueTreeState.getParameterAsValue("editorHeight").setValue(getHeight());
 }

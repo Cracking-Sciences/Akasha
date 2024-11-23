@@ -58,21 +58,28 @@ namespace Akasha {
 		juce::Label label;
 	};
 
-	class FormulaEditor : public juce::CodeEditorComponent {
+	class FormulaEditor : public juce::CodeEditorComponent,
+		private juce::CodeDocument::Listener {
 	public:
 		FormulaEditor(juce::CodeDocument& document, juce::CodeTokeniser* codeTokeniser, Akasha::JSEngine& engine) :
 			juce::CodeEditorComponent(document, codeTokeniser), jsEngine(engine) {
 			setFont(juce::Font(juce::Font::getDefaultMonospacedFontName(), 15.0f, juce::Font::plain));
 			setTabSize(4, true);
+
+			document.addListener(this);
+			setScrollbarThickness(8);
 		}
 
 		void compile() {
 			juce::String info;
-			giveInfo("");
+			giveInfo("Compiling...");
 			if (!jsEngine.loadFunction(getText().toStdString(), info)) {
 				giveInfo(info);
 			}
-			giveInfo("Compiled OK :D");
+			else {
+				giveInfo("Compiled OK :D");
+			}
+			editAfterCompile = false;
 		}
 
 		bool keyPressed(const juce::KeyPress& key) override {
@@ -94,24 +101,58 @@ namespace Akasha {
 			loadContent(newText);
 		}
 
+		void focusGained(FocusChangeType cause) override {
+			hasFocus = true;
+			repaint();
+		}
+		void focusLost(FocusChangeType cause) override {
+			hasFocus = false;
+			repaint();
+			// auto recompile : )
+			if (editAfterCompile) {
+				compile();
+			}
+		}
+
+		void paint(juce::Graphics& g) override {
+			juce::CodeEditorComponent::paint(g);
+			if (!hasFocus) {
+				juce::Colour overlayColour = juce::Colours::grey.withAlpha(0.2f);
+				auto bounds = getLocalBounds();
+				g.setColour(overlayColour);
+				g.fillRect(bounds);
+			}
+		}
+
 	private:
+		void codeDocumentTextInserted(const juce::String&, int) override {
+			editAfterCompile = true;
+		}
+		void codeDocumentTextDeleted(int, int) override {
+			editAfterCompile = true;
+		}
+
 		void giveInfo(juce::String info) {
 			if (console != nullptr) {
 				console->setText(info);
 			}
 		}
+
 		juce::TextEditor* console = nullptr; // debug purpose.
 		Akasha::JSEngine& jsEngine;
+		bool hasFocus = false; // keyboard focus
+		bool editAfterCompile = false;
 	};
 }
 
-class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor{
+class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor {
 public:
 	AkashaAudioProcessorEditor(AkashaAudioProcessor& p, juce::AudioProcessorValueTreeState& vts);
 	~AkashaAudioProcessorEditor() override;
 
 	void paint(juce::Graphics&) override;
 	void resized() override;
+	void mouseDown(const juce::MouseEvent& event) override;
 
 	juce::String getCodeString() const {
 		return formulaEditor.getText();

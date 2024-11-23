@@ -17,7 +17,9 @@ namespace Akasha {
 	public:
 		CustomLookAndFeel() {
 			setDefaultSansSerifTypeface(getCustomFont());
-			setColour(juce::CodeEditorComponent::backgroundColourId, juce::Colour(0xFF101010));
+			setColour(juce::CodeEditorComponent::backgroundColourId, juce::Colour(0xFF252525));
+			setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xFF353535));
+			setColour(juce::TextEditor::outlineColourId, juce::Colour(0xFF707070));
 		}
 		static const juce::Typeface::Ptr getCustomFont() {
 			static auto typeface = juce::Typeface::createSystemTypefaceFor(din::DIN_ttf, din::DIN_ttfSize);

@@ -136,6 +136,11 @@ namespace Akasha {
 		for (int i = 0; i < 8; ++i) {
 			layout.add(std::make_unique<juce::AudioParameterFloat>("macro" + juce::String(i), "macro" + juce::String(i), 0.0f, 1.0f, 0.0f));
 		}
+		// editorSize
+		layout.add(std::make_unique<juce::AudioParameterInt>(
+			"editorWidth", "Editor Width", 600, std::numeric_limits<int>::max(), 800));
+		layout.add(std::make_unique<juce::AudioParameterInt>(
+			"editorHeight", "Editor Height", 600, std::numeric_limits<int>::max(), 1000));
 		return layout;
 	}
 }
@@ -193,4 +198,5 @@ private:
 	std::vector<Akasha::AkashaVoice*> voices;
 	juce::AudioProcessorValueTreeState parameters;
 	std::array<std::atomic<float>*, 8> macros;
+
 };

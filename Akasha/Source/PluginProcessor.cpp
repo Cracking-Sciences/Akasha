@@ -154,15 +154,26 @@ juce::AudioProcessorEditor* AkashaAudioProcessor::createEditor() {
 }
 
 void AkashaAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
+	if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
+		savedCode = editor->getCodeString();
+		savedMacroText = editor->getMacroText();
+	}
 	auto state = parameters.copyState();
 	std::unique_ptr<juce::XmlElement> xml (state.createXml());
-
-	juce::XmlElement* textData = xml->createNewChildElement("Text");
-	textData->setAttribute("code", savedCode);
-	for (int i = 0; i < 8; ++i) {
-		textData->setAttribute("macro" + juce::String(i), savedMacroText[i]);
+	if (xml != nullptr) {
+		while (auto* existingText = xml->getChildByName("Text")) {
+			xml->removeChildElement(existingText, true);
+		}
+		juce::XmlElement* textData = xml->createNewChildElement("Text");
+		if (textData != nullptr) {
+			textData->setAttribute("code", savedCode);
+			for (int i = 0; i < 8; ++i) {
+				textData->setAttribute("macro" + juce::String(i), savedMacroText[i]);
+			}
+		}
+		copyXmlToBinary(*xml, destData);
 	}
-	copyXmlToBinary (*xml, destData);
+	DBG("Generated XML: " + xml->toString()); // debug
 }
 
 void AkashaAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
@@ -174,13 +185,14 @@ void AkashaAudioProcessor::setStateInformation(const void* data, int sizeInBytes
 	}
 	else{
 		std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+		DBG("Loaded XML: " + xmlState->toString()); // debug
 		if (xmlState.get() != nullptr) {
 			if (xmlState->hasTagName(parameters.state.getType())) {
 				parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 				if (auto* textData = xmlState->getChildByName("Text")) {
-					savedCode = textData->getStringAttribute("code");
+					savedCode = textData->getStringAttribute("code", defaultJavascriptCode);
 					for (int i = 0; i < 8; ++i) {
-						savedMacroText[i] = textData->getStringAttribute("macro" + juce::String(i));
+						savedMacroText[i] = textData->getStringAttribute("macro" + juce::String(i), "m" + juce::String(i));
 					}
 				}
 			}
