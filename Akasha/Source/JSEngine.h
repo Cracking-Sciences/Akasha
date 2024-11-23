@@ -64,6 +64,7 @@ namespace Akasha {
 			cached_context_list.resize(num_cached_contexts);
 			cached_global_list.resize(num_cached_contexts);
 			cached_function_list.resize(num_cached_contexts);
+			cached_args_list.resize(num_cached_contexts);
 		}
 
 		~JSEngine() {
@@ -75,6 +76,9 @@ namespace Akasha {
 			}
 			for (auto& cached_function : cached_function_list) {
 				cached_function.Reset();
+			}
+			for (auto& cached_args : cached_args_list) {
+				cached_args.Reset();
 			}
 			isolate->Dispose();
 			v8::V8::Dispose();
@@ -120,6 +124,9 @@ namespace Akasha {
 				cached_function_list[i].Reset(isolate, func_value.As<v8::Function>());
 
 				cached_global_list[i].Reset(isolate, cached_context_list[i].Get(isolate)->Global());
+
+				cached_args_list[i].Reset(isolate, v8::Array::New(isolate, 15));
+
 			}
 			function_ready = true;
 			return true;
@@ -144,7 +151,7 @@ namespace Akasha {
 			v8::TryCatch try_catch(isolate);
 
 			// Convert the C++ array to a JavaScript array
-			v8::Local<v8::Object> js_args = convertToJSObject(args);
+			v8::Local<v8::Array> js_args = convertToJSObject(args, voiceId);
 
 			// Prepare arguments for the function (only one argument, the array)
 			v8::Local<v8::Value> js_func_args[1] = { js_args };
@@ -196,38 +203,42 @@ namespace Akasha {
 		}
 
 	private:
-		v8::Local<v8::Object> convertToJSObject(const JSFuncParams& params) {
-			v8::Local<v8::Object> jsObject = v8::Object::New(isolate);
+		v8::Local<v8::Array> convertToJSObject(const JSFuncParams& params, int voiceId) {
+			v8::Local<v8::Array> jsObject = cached_args_list[voiceId].Get(isolate);
 			v8::Local<v8::Array> jsMacros = v8::Array::New(isolate, params.macros.size());
 			for (size_t i = 0; i < params.macros.size(); ++i) {
-				jsMacros->Set(isolate->GetCurrentContext(), i, v8::Number::New(isolate, *params.macros[i])).Check();
+				jsMacros->Set(isolate->GetCurrentContext(), i, v8::Number::New(isolate, *params.macros[i])).FromJust();
 			}
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "macros").ToLocalChecked(), jsMacros).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "tempo").ToLocalChecked(), v8::Number::New(isolate, params.tempo)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "beat").ToLocalChecked(), v8::Number::New(isolate, params.beat)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "sampleRate").ToLocalChecked(), v8::Number::New(isolate, params.sampleRate)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "bufferLen").ToLocalChecked(), v8::Number::New(isolate, params.bufferLen)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "bufferPos").ToLocalChecked(), v8::Number::New(isolate, params.bufferPos)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "time").ToLocalChecked(), v8::Number::New(isolate, params.time)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "note").ToLocalChecked(), v8::Number::New(isolate, params.note)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "velocity").ToLocalChecked(), v8::Number::New(isolate, params.velocity)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "pressing").ToLocalChecked(), v8::Boolean::New(isolate, params.justPressed)).Check();
-			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "releasing").ToLocalChecked(), v8::Boolean::New(isolate, params.justReleased)).Check();
+			jsObject->Set(isolate->GetCurrentContext(), 0, jsMacros).FromJust();                               // macros
+			jsObject->Set(isolate->GetCurrentContext(), 1, v8::Number::New(isolate, params.tempo)).FromJust(); // tempo
+			jsObject->Set(isolate->GetCurrentContext(), 2, v8::Number::New(isolate, params.beat)).FromJust();  // beat
+			jsObject->Set(isolate->GetCurrentContext(), 3, v8::Number::New(isolate, params.sampleRate)).FromJust(); // sampleRate
+			jsObject->Set(isolate->GetCurrentContext(), 4, v8::Number::New(isolate, params.bufferLen)).FromJust();  // bufferLen
+			jsObject->Set(isolate->GetCurrentContext(), 5, v8::Number::New(isolate, params.bufferPos)).FromJust();  // bufferPos
+			jsObject->Set(isolate->GetCurrentContext(), 6, v8::Number::New(isolate, params.time)).FromJust();       // time
+			jsObject->Set(isolate->GetCurrentContext(), 7, v8::Number::New(isolate, params.note)).FromJust();       // note
+			jsObject->Set(isolate->GetCurrentContext(), 8, v8::Number::New(isolate, params.velocity)).FromJust();   // velocity
+			jsObject->Set(isolate->GetCurrentContext(), 9, v8::Boolean::New(isolate, params.justPressed)).FromJust(); // pressing
+			jsObject->Set(isolate->GetCurrentContext(), 10, v8::Boolean::New(isolate, params.justReleased)).FromJust(); // releasing
+
 			return jsObject;
 		}
 
 		v8::Isolate::CreateParams create_params;
 		v8::Isolate* isolate;
 		std::unique_ptr<v8::Platform> platform;
-		 
-		// Cache as persistent handles for memory safety
+
 		std::vector<v8::Global<v8::Context>> cached_context_list;
 		std::vector<v8::Global<v8::Object>> cached_global_list;
 		std::vector<v8::Global<v8::Function>> cached_function_list;
+		std::vector<v8::Global<v8::Array>> cached_args_list;
+
 
 		const int num_cached_contexts = 16;
 
 		bool function_ready = false;
+
+
 	};
 }
 #endif

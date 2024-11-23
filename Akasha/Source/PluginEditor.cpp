@@ -29,19 +29,18 @@ function dcBlocker(input, alpha=0.995){
     return output;
 }
 
+var phase = 0.0
 
 function main(args){
-    var macros = args.macros;
-    var tempo = args.tempo;
-    var sampleRate = args.sampleRate;
-    var time = args.time;
-    var beat = args.beat;
-    var note = args.note;
-    var velocity = args.velocity;
+    var [macros, tempo, beat, sampleRate, bufferLen, bufferPos, 
+        time, note, velocity, justPressed, justReleased
+        ] = args;
     // calc freq
     var freq = midiNoteToFreq(note);
+    phase += freq / sampleRate;
+    phase %= 1.0;
 
-    var output = time * freq % 1 * 0.5;
+    var output = (phase % 1 - 0.5) * 0.5;
     output = dcBlocker(output);
     return output;
 }
