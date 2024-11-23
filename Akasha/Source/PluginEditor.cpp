@@ -36,10 +36,6 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 		macroSliderAttachments.add(attachment);
 	}
 
-	// code editor.
-	formulaEditor.setConsole(&code_console);
-	addAndMakeVisible(formulaEditor);
-
 	// console.
 	code_console.setMultiLine(true);
 	code_console.setReadOnly(true);
@@ -47,6 +43,10 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	code_console.setScrollbarsShown(true);
 	code_console.setFont(juce::Font(juce::Font::getDefaultMonospacedFontName(), 15.0f, juce::Font::plain));
 	addAndMakeVisible(code_console);
+
+	// code editor.
+	formulaEditor.setConsole(&code_console);
+	addAndMakeVisible(formulaEditor);
 
 	// main editor.
 	setSize(800, 600);
@@ -57,6 +57,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	for (auto voice_ptr : audioProcessor.getVoices()) {
 		voice_ptr->setConsole(&code_console);
 	}
+	// read other states
 	setCodeString(audioProcessor.savedCode);    
 	setMacroText(audioProcessor.savedMacroText);
 }

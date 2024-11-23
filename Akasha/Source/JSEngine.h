@@ -50,17 +50,39 @@ namespace Akasha {
 
 
 namespace Akasha {
-	class JSEngine {
+	class V8GlobalManager {
 	public:
-		JSEngine() {
+		static V8GlobalManager& getInstance() {
+			static V8GlobalManager instance;
+			return instance;
+		}
+
+		v8::Platform* getPlatform() { return platform.get(); }
+
+	private:
+		V8GlobalManager() {
 			v8::V8::InitializeICUDefaultLocation(".");
 			v8::V8::InitializeExternalStartupData(".");
 			platform = v8::platform::NewDefaultPlatform();
 			v8::V8::InitializePlatform(platform.get());
 			v8::V8::Initialize();
+		}
+
+		~V8GlobalManager() {
+			v8::V8::Dispose();
+			v8::V8::DisposePlatform();
+		}
+		V8GlobalManager(const V8GlobalManager&) = delete;
+		V8GlobalManager& operator=(const V8GlobalManager&) = delete;
+		std::unique_ptr<v8::Platform> platform;
+	};
+
+	class JSEngine {
+	public:
+		JSEngine() {
+			auto& globalManager = V8GlobalManager::getInstance();
 			create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 			isolate = v8::Isolate::New(create_params);
-
 			cached_context_list.resize(num_cached_contexts);
 			cached_global_list.resize(num_cached_contexts);
 			cached_function_list.resize(num_cached_contexts);
@@ -78,11 +100,15 @@ namespace Akasha {
 				cached_function.Reset();
 			}
 			for (auto& cached_args : cached_args_list) {
+				if (!cached_args.IsEmpty()) {
+					auto backingStore = cached_args.Get(isolate)->GetBackingStore();
+					backingStore.reset();
+				}
 				cached_args.Reset();
 			}
-			isolate->Dispose();
-			v8::V8::Dispose();
-			v8::V8::DisposePlatform();
+			if (isolate) {
+				isolate->Dispose();
+			}
 			delete create_params.array_buffer_allocator;
 		}
 
@@ -249,13 +275,10 @@ namespace Akasha {
 		std::vector<v8::Global<v8::Function>> cached_function_list;
 		std::vector<v8::Global<v8::ArrayBuffer>> cached_args_list;
 
-
 		const int num_cached_contexts = 16;
-
 		const int array_buffer_len = 20;
+
 		bool function_ready = false;
-
-
 	};
 }
 #endif

@@ -35,7 +35,7 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 }
 
 AkashaAudioProcessor::~AkashaAudioProcessor(){
-	synth.clearVoices();
+	
 }
 
 const juce::String AkashaAudioProcessor::getName() const {
@@ -158,11 +158,9 @@ void AkashaAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
 	std::unique_ptr<juce::XmlElement> xml (state.createXml());
 
 	juce::XmlElement* textData = xml->createNewChildElement("Text");
-	if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
-		textData->setAttribute("code", editor->getCodeString());
-		for (int i = 0; i < 8; ++i) {
-			textData->setAttribute("macro" + juce::String(i), editor->getMacroText()[i]);
-		}
+	textData->setAttribute("code", savedCode);
+	for (int i = 0; i < 8; ++i) {
+		textData->setAttribute("macro" + juce::String(i), savedMacroText[i]);
 	}
 	copyXmlToBinary (*xml, destData);
 }
