@@ -32,7 +32,7 @@ function dcBlocker(input, alpha=0.995){
 var phase = 0.0
 
 function main(args){
-    var [macros, tempo, beat, sampleRate, bufferLen, bufferPos, 
+    var [m0,m1,m2,m3,m4,m5,m6,m7, tempo, beat, sampleRate, bufferLen, bufferPos, 
         time, note, velocity, justPressed, justReleased
         ] = args;
     // calc freq

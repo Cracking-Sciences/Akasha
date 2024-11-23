@@ -41,28 +41,27 @@ function mix(ratio, a, b){
 function freq_shift(freq){
     return exponentialMapping((freq / 20000), 1)*freq;
 }
+
+var phase = 0.0
+
 function main(args){
-    var macros = args.macros;
-    var tempo = args.tempo;
-    var sampleRate = args.sampleRate;
-    var time = args.time;
-    var beat = args.beat;
-    var note = args.note;
-    var velocity = args.velocity;
-    // calc freq
+    var [m0,m1,m2,m3,m4,m5,m6,m7, tempo, beat, sampleRate, bufferLen, bufferPos, 
+        time, note, velocity, justPressed, justReleased
+        ] = args;
+
     var freq = midiNoteToFreq(note) / 4;
 
-    var harmonics = 1024 * exponentialMapping(macros[1]);
+    var harmonics = 512 * exponentialMapping(m1);
     var output = 0;
     for (var i = 0; i < harmonics; i++) {
         var basic_freq = freq * (i + 1)
         output += sinUnit(
-            (mix(macros[2], freq_shift(basic_freq), basic_freq)
+            (mix(m2, freq_shift(basic_freq), basic_freq)
             * time), 
             1 / (i + 1), 
         0);
     }
 
-    return output*macros[0];
+    return output*m0;
 }
 

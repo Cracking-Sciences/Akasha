@@ -17,32 +17,28 @@ function dcBlocker(input, alpha = 0.995) {
     return output;
 }
 
-function shift16(a, bits) {
+function shift8(a, bits) {
     if (bits > 0) {
-        bits = bits % 16;
-        return (a << bits) % 256 + (a >> (16 - bits)) % 256;
+        bits = bits % 8;
+        return (a << bits) % 256 + (a >> (8 - bits)) % 256;
     } else {
         bits = -bits;
-        bits = bits % 16;
-        return (a >> bits) % 256 + (a << (16 - bits)) % 256;
+        bits = bits % 8;
+        return (a >> bits) % 256 + (a << (8 - bits)) % 256;
     }
 }
 
-function main(args) {
-    var macros = args.macros;
-    var tempo = args.tempo;
-    var sampleRate = args.sampleRate;
-    var time = args.time;
-    var beat = args.beat;
-    var note = args.note;
-    var velocity = args.velocity;
+function main(args){
+    var [m0,m1,m2,m3,m4,m5,m6,m7, tempo, beat, sampleRate, bufferLen, bufferPos, 
+        time, note, velocity, justPressed, justReleased
+        ] = args;
 
-    // Calculate frequency
     var freq = midiNoteToFreq(note);
 
     var t = (time * freq / 32 % 1.0) * 255 | 0;
-    var output = shift16(t, 7 * macros[1]) & shift16(t, -2);
+    var output = shift8(t, 7 * m1) & shift8(t, -2);
 
-    output = dcBlocker(output / 256.0 * 31 * macros[0] % 1.0);
+    output = dcBlocker(output / 256.0 * 31 * m0 % 1.0);
     return output;
 }
+
