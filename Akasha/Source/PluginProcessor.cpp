@@ -35,7 +35,7 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 }
 
 AkashaAudioProcessor::~AkashaAudioProcessor(){
-	
+	synth.clearVoices();
 }
 
 const juce::String AkashaAudioProcessor::getName() const {

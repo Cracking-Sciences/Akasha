@@ -90,9 +90,6 @@ namespace Akasha {
 		}
 
 		~JSEngine() {
-			for (auto& cached_context : cached_context_list) {
-				cached_context.Reset();
-			}
 			for (auto& cached_global : cached_global_list) {
 				cached_global.Reset();
 			}
@@ -100,11 +97,10 @@ namespace Akasha {
 				cached_function.Reset();
 			}
 			for (auto& cached_args : cached_args_list) {
-				if (!cached_args.IsEmpty()) {
-					auto backingStore = cached_args.Get(isolate)->GetBackingStore();
-					backingStore.reset();
-				}
 				cached_args.Reset();
+			}
+			for (auto& cached_context : cached_context_list) {
+				cached_context.Reset();
 			}
 			if (isolate) {
 				isolate->Dispose();
@@ -234,10 +230,10 @@ namespace Akasha {
 		v8::Local<v8::Float64Array> convertToJSObject(const JSFuncParams& params, int voiceId) {
 			if (cached_args_list[voiceId].IsEmpty()) {
 				auto backingStore = v8::ArrayBuffer::NewBackingStore(
-					malloc(array_buffer_len * sizeof(double)),
+					new double[array_buffer_len],
 					array_buffer_len * sizeof(double),
 					[](void* data, size_t length, void* deleterData) {
-						free(data);
+						delete[] static_cast<double*>(data);
 					},
 					nullptr
 				);
