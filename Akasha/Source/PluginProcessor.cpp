@@ -135,7 +135,6 @@ void AkashaAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 	}
 	synth.setCurrentPlaybackSampleRate(getSampleRate());
 	synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
-
 }
 
 bool AkashaAudioProcessor::hasEditor() const {

@@ -63,17 +63,18 @@ namespace Akasha {
 
 			cached_context_list.resize(num_cached_contexts);
 			cached_global_list.resize(num_cached_contexts);
-
+			cached_function_list.resize(num_cached_contexts);
 		}
 
 		~JSEngine() {
-			context.Reset();
-			function.Reset();
 			for (auto& cached_context : cached_context_list) {
 				cached_context.Reset();
 			}
 			for (auto& cached_global : cached_global_list) {
 				cached_global.Reset();
+			}
+			for (auto& cached_function : cached_function_list) {
+				cached_function.Reset();
 			}
 			isolate->Dispose();
 			v8::V8::Dispose();
@@ -84,47 +85,42 @@ namespace Akasha {
 		bool loadFunction(const std::string& source_code, juce::String& info) {
 			v8::Isolate::Scope isolate_scope(isolate);
 			v8::HandleScope handle_scope(isolate);
-			context.Reset(isolate, v8::Context::New(isolate));
-			v8::Context::Scope context_scope(context.Get(isolate));
-
-			v8::TryCatch try_catch(isolate);
-
-			v8::Local<v8::String> source = v8::String::NewFromUtf8(isolate, source_code.c_str()).ToLocalChecked();
-			v8::Local<v8::Script> script;
-			if (!v8::Script::Compile(context.Get(isolate), source).ToLocal(&script)) {
-				v8::String::Utf8Value error(isolate, try_catch.Exception());
-				std::string error_str(*error);
-				info = juce::String(error_str);
-				try_catch.Reset();
-				return false;
-			}
-
-			if (script->Run(context.Get(isolate)).IsEmpty()) {
-				v8::String::Utf8Value error(isolate, try_catch.Exception());
-				std::string error_str(*error);
-				info = juce::String(error_str);
-				try_catch.Reset();
-				return false;
-			}
-
-			v8::Local<v8::Value> func_value;
-			if (!context.Get(isolate)->Global()->Get(context.Get(isolate), v8::String::NewFromUtf8(isolate, "main").ToLocalChecked()).ToLocal(&func_value)) {
-				return false;
-			}
-			if (!func_value->IsFunction()) { 
-				info = juce::String("function 'main' not found.\n");
-				return false; 
-			}
-
-			function.Reset(isolate, func_value.As<v8::Function>());
-
-			// Cache the context and global object as persistent handles
 			for (int i = 0; i < num_cached_contexts; i++) {
-				cached_context_list[i].Reset(isolate, context.Get(isolate));
+				auto& context = cached_context_list[i];
+				context.Reset(isolate, v8::Context::New(isolate));
+				v8::Context::Scope context_scope(context.Get(isolate));
+				v8::TryCatch try_catch(isolate);
+				v8::Local<v8::String> source = v8::String::NewFromUtf8(isolate, source_code.c_str()).ToLocalChecked();
+				v8::Local<v8::Script> script;
+				if (!v8::Script::Compile(context.Get(isolate), source).ToLocal(&script)) {
+					v8::String::Utf8Value error(isolate, try_catch.Exception());
+					std::string error_str(*error);
+					info = juce::String(error_str);
+					try_catch.Reset();
+					return false;
+				}
+
+				if (script->Run(context.Get(isolate)).IsEmpty()) {
+					v8::String::Utf8Value error(isolate, try_catch.Exception());
+					std::string error_str(*error);
+					info = juce::String(error_str);
+					try_catch.Reset();
+					return false;
+				}
+
+				v8::Local<v8::Value> func_value;
+				if (!context.Get(isolate)->Global()->Get(context.Get(isolate), v8::String::NewFromUtf8(isolate, "main").ToLocalChecked()).ToLocal(&func_value)) {
+					return false;
+				}
+				if (!func_value->IsFunction()) { 
+					info = juce::String("function 'main' not found.\n");
+					return false; 
+				}
+
+				cached_function_list[i].Reset(isolate, func_value.As<v8::Function>());
+
 				cached_global_list[i].Reset(isolate, cached_context_list[i].Get(isolate)->Global());
 			}
-			// cached_context.Reset(isolate, context.Get(isolate));
-			// cached_global.Reset(isolate, cached_context.Get(isolate)->Global());
 			function_ready = true;
 			return true;
 		}
@@ -134,6 +130,7 @@ namespace Akasha {
 			voiceId = voiceId % num_cached_contexts;
 			v8::Global<v8::Context>& cached_context = cached_context_list[voiceId];
 			v8::Global<v8::Object>& cached_global = cached_global_list[voiceId];
+			v8::Global<v8::Function>& function = cached_function_list[voiceId];
 
 			if (cached_context.IsEmpty()) {
 				info = juce::String("Not compiled.\n");
@@ -211,7 +208,6 @@ namespace Akasha {
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "sampleRate").ToLocalChecked(), v8::Number::New(isolate, params.sampleRate)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "bufferLen").ToLocalChecked(), v8::Number::New(isolate, params.bufferLen)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "bufferPos").ToLocalChecked(), v8::Number::New(isolate, params.bufferPos)).Check();
-
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "time").ToLocalChecked(), v8::Number::New(isolate, params.time)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "note").ToLocalChecked(), v8::Number::New(isolate, params.note)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "velocity").ToLocalChecked(), v8::Number::New(isolate, params.velocity)).Check();
@@ -223,12 +219,11 @@ namespace Akasha {
 		v8::Isolate::CreateParams create_params;
 		v8::Isolate* isolate;
 		std::unique_ptr<v8::Platform> platform;
-		v8::Global<v8::Context> context;
-		v8::Global<v8::Function> function;
-
+		 
 		// Cache as persistent handles for memory safety
 		std::vector<v8::Global<v8::Context>> cached_context_list;
 		std::vector<v8::Global<v8::Object>> cached_global_list;
+		std::vector<v8::Global<v8::Function>> cached_function_list;
 
 		const int num_cached_contexts = 16;
 

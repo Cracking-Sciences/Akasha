@@ -68,6 +68,7 @@ namespace Akasha {
 
 		void compile() {
 			juce::String info;
+			giveInfo("");
 			if (!jsEngine.loadFunction(getText().toStdString(), info)) {
 				giveInfo(info);
 			}
