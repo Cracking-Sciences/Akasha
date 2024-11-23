@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="hVIJOc" name="Akasha" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginCharacteristicsValue="pluginIsSynth">
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
+              companyName="Cracking Sciences">
   <MAINGROUP id="LKIRRr" name="Akasha">
     <GROUP id="{3A77558B-6FCD-E060-4D31-37E331F68564}" name="Source">
       <GROUP id="{A338E764-04E7-6973-3AB0-22A9C378D2F2}" name="assets">

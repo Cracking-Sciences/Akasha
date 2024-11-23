@@ -25,9 +25,17 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 		synth.addVoice(voices[i]);
 	}
 	synth.addSound(new Akasha::AkashaSound());
+	// default
+	savedCode = defaultJavascriptCode;
+	for (int i = 0; i < 8; ++i) {
+		savedMacroText[i] = "m" + juce::String(i);
+	}
+	juce::String dummy;
+	jsEngine.loadFunction(savedCode.toStdString(), dummy);
 }
 
 AkashaAudioProcessor::~AkashaAudioProcessor(){
+	synth.clearVoices();
 }
 
 const juce::String AkashaAudioProcessor::getName() const {
@@ -156,27 +164,38 @@ void AkashaAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
 			textData->setAttribute("macro" + juce::String(i), editor->getMacroText()[i]);
 		}
 	}
-
 	copyXmlToBinary (*xml, destData);
 }
 
 void AkashaAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
-	std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
-	if (xmlState.get() != nullptr) {
-		if (xmlState->hasTagName(parameters.state.getType())) {
-			parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
-			if (auto* textData = xmlState->getChildByName("Text")) {
-				if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
-					editor->setCodeString(textData->getStringAttribute("code"));
-					editor->compile();
-					std::array<juce::String, 8> macroText;
+	if (data == nullptr || sizeInBytes == 0) {
+		savedCode = defaultJavascriptCode;
+		for (int i = 0; i < 8; ++i) {
+			savedMacroText[i] = "m" + juce::String(i);
+		}
+	}
+	else{
+		std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+		if (xmlState.get() != nullptr) {
+			if (xmlState->hasTagName(parameters.state.getType())) {
+				parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
+				if (auto* textData = xmlState->getChildByName("Text")) {
+					savedCode = textData->getStringAttribute("code");
 					for (int i = 0; i < 8; ++i) {
-						macroText[i] = textData->getStringAttribute("macro" + juce::String(i));
+						savedMacroText[i] = textData->getStringAttribute("macro" + juce::String(i));
 					}
-					editor->setMacroText(macroText);
 				}
 			}
 		}
+	}
+	if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
+		editor->setCodeString(savedCode);
+		editor->setMacroText(savedMacroText);
+		editor->compile();
+	}
+	else {
+		juce::String dummy;
+		jsEngine.loadFunction(savedCode.toStdString(), dummy);
 	}
 }
 
@@ -184,3 +203,40 @@ void AkashaAudioProcessor::setStateInformation(const void* data, int sizeInBytes
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 	return new AkashaAudioProcessor();
 }
+
+
+const char* const defaultJavascriptCode = R"(// javascripts here
+function midiNoteToFreq(note){
+    if (note < 0 || note > 127) {
+        return 0;
+    }
+    const A4 = 440;
+    const A4_note = 69;
+    return A4 * Math.pow(2, (note - A4_note)/12);
+}
+
+var dcBlockerLastInput = 0;
+var dcBlockerLastOutput = 0;
+function dcBlocker(input, alpha=0.995){
+    const output = input - dcBlockerLastInput + alpha * dcBlockerLastOutput;
+    dcBlockerLastInput = input;
+    dcBlockerLastOutput = output;
+    return output;
+}
+
+var phase = 0.0
+
+function main(args){
+    var [m0,m1,m2,m3,m4,m5,m6,m7, tempo, beat, sampleRate, bufferLen, bufferPos, 
+        time, note, velocity, justPressed, justReleased
+        ] = args;
+    // calc freq
+    var freq = midiNoteToFreq(note);
+    phase += freq / sampleRate;
+    phase %= 1.0;
+
+    var output = (phase % 1 - 0.5) * 0.5;
+    output = dcBlocker(output);
+    return output;
+}
+)";

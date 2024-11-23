@@ -151,7 +151,6 @@ private:
 	juce::OwnedArray<SliderAttachment> macroSliderAttachments;
 	// code editor.
 	juce::CodeDocument codeDocument;
-		// juce::CPlusPlusCodeTokeniser codeTokeniser;
 	JavascriptTokeniser codeTokeniser;
 	std::unique_ptr<Akasha::FormulaEditor> formulaEditorPointer;
 	Akasha::FormulaEditor& formulaEditor;

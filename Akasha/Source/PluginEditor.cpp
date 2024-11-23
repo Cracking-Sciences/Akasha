@@ -10,42 +10,7 @@
 #include "PluginEditor.h"
 #include "JSEngine.h"
 
-const char* javascriptCode = R"(// javascripts here
-function midiNoteToFreq(note){
-    if (note < 0 || note > 127) {
-        return 0;
-    }
-    const A4 = 440;
-    const A4_note = 69;
-    return A4 * Math.pow(2, (note - A4_note)/12);
-}
 
-var dcBlockerLastInput = 0;
-var dcBlockerLastOutput = 0;
-function dcBlocker(input, alpha=0.995){
-    const output = input - dcBlockerLastInput + alpha * dcBlockerLastOutput;
-    dcBlockerLastInput = input;
-    dcBlockerLastOutput = output;
-    return output;
-}
-
-var phase = 0.0
-
-function main(args){
-    var [m0,m1,m2,m3,m4,m5,m6,m7, tempo, beat, sampleRate, bufferLen, bufferPos, 
-        time, note, velocity, justPressed, justReleased
-        ] = args;
-    // calc freq
-    var freq = midiNoteToFreq(note);
-    phase += freq / sampleRate;
-    phase %= 1.0;
-
-    var output = (phase % 1 - 0.5) * 0.5;
-    output = dcBlocker(output);
-    return output;
-}
-
-)";
 
 AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, juce::AudioProcessorValueTreeState& vts):
 	AudioProcessorEditor(&p),
@@ -72,7 +37,6 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	}
 
 	// code editor.
-	formulaEditor.setText(javascriptCode);
 	formulaEditor.setConsole(&code_console);
 	addAndMakeVisible(formulaEditor);
 
@@ -85,7 +49,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	addAndMakeVisible(code_console);
 
 	// main editor.
-	setSize(600, 400);
+	setSize(800, 600);
 	setResizable(true, true);
 	setResizeLimits(600, 400, std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 
@@ -93,9 +57,8 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	for (auto voice_ptr : audioProcessor.getVoices()) {
 		voice_ptr->setConsole(&code_console);
 	}
-
-	// First Compile
-	formulaEditor.compile();
+	setCodeString(audioProcessor.savedCode);    
+	setMacroText(audioProcessor.savedMacroText);
 }
 
 AkashaAudioProcessorEditor::~AkashaAudioProcessorEditor() {

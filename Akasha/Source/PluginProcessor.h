@@ -3,6 +3,8 @@
 #include <JuceHeader.h>
 #include "JSEngine.h"
 
+extern const char* const defaultJavascriptCode;
+
 // sound
 namespace Akasha {
 	class AkashaSound : public juce::SynthesiserSound {
@@ -178,6 +180,9 @@ public:
 	std::vector<Akasha::AkashaVoice*>& getVoices() {
 		return voices;
 	}
+
+	juce::String savedCode;
+	std::array<juce::String, 8> savedMacroText;
 
 private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AkashaAudioProcessor)
