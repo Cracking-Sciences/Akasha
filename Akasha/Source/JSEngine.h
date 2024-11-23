@@ -3,24 +3,24 @@
 
 namespace Akasha {
 	struct JSFuncParams {
-		std::array<double, 8>& macros; // macros
-		double tempo; // tempo
-		double beat;
-		double sampleRate; // sample rate
-		double time; // time
+		std::array<std::atomic<float>*, 8> macros;
+		double tempo = 0.0;
+		double beat = 0.0;
+		double sampleRate = 0.0;
+
+		// advanced audio buffer info
+		int bufferLen;
+		int bufferPos;
 
 		// std::array<double(&)(double), 4> lfoFuncs; // TODO: lfo functions
 		// TODO: MPE
+		double time;
 		int note; // note
 		float velocity; // velocity
-
-		JSFuncParams(std::array<double, 8>& macrosRef)
-			: macros(macrosRef), tempo(0.0), beat(0.0), sampleRate(0.0), time(0.0), note(0), velocity(0.0f) {
-		}
+		bool justPressed; // just note on
+		bool justReleased; // just note off
 	};
 }
-
-
 
 
 
@@ -31,7 +31,8 @@ namespace Akasha {
 		JSEngine() {}
 		~JSEngine() {}
 		bool loadFunction(const std::string& source_code, juce::String& info) { return true; }
-		bool callFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info) { return true; }
+		bool callFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId = 0) { return true; }
+		bool isFunctionReady() const { return true; }
 	};
 }
 #endif
@@ -202,15 +203,20 @@ namespace Akasha {
 			v8::Local<v8::Object> jsObject = v8::Object::New(isolate);
 			v8::Local<v8::Array> jsMacros = v8::Array::New(isolate, params.macros.size());
 			for (size_t i = 0; i < params.macros.size(); ++i) {
-				jsMacros->Set(isolate->GetCurrentContext(), i, v8::Number::New(isolate, params.macros[i])).Check();
+				jsMacros->Set(isolate->GetCurrentContext(), i, v8::Number::New(isolate, *params.macros[i])).Check();
 			}
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "macros").ToLocalChecked(), jsMacros).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "tempo").ToLocalChecked(), v8::Number::New(isolate, params.tempo)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "beat").ToLocalChecked(), v8::Number::New(isolate, params.beat)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "sampleRate").ToLocalChecked(), v8::Number::New(isolate, params.sampleRate)).Check();
+			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "bufferLen").ToLocalChecked(), v8::Number::New(isolate, params.bufferLen)).Check();
+			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "bufferPos").ToLocalChecked(), v8::Number::New(isolate, params.bufferPos)).Check();
+
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "time").ToLocalChecked(), v8::Number::New(isolate, params.time)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "note").ToLocalChecked(), v8::Number::New(isolate, params.note)).Check();
 			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "velocity").ToLocalChecked(), v8::Number::New(isolate, params.velocity)).Check();
+			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "pressing").ToLocalChecked(), v8::Boolean::New(isolate, params.justPressed)).Check();
+			jsObject->Set(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "releasing").ToLocalChecked(), v8::Boolean::New(isolate, params.justReleased)).Check();
 			return jsObject;
 		}
 

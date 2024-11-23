@@ -30,7 +30,7 @@ namespace Akasha {
 
 			label.setText(labelText, juce::dontSendNotification);
 			label.setJustificationType(juce::Justification::centred);
-			label.setEditable(false);
+			label.setEditable(true);
 			addAndMakeVisible(label);
 		}
 
@@ -43,6 +43,14 @@ namespace Akasha {
 			flexBox.items.add(juce::FlexItem(label).withFlex(1.0f));
 			flexBox.items.add(juce::FlexItem(slider).withFlex(5.0f));
 			flexBox.performLayout(getLocalBounds());
+		}
+
+		juce::String getLabelText() {
+			return label.getText();
+		}
+
+		void setLabelText(const juce::String& newText) {
+			label.setText(newText, juce::dontSendNotification);
 		}
 
 	private:
@@ -58,15 +66,17 @@ namespace Akasha {
 			setTabSize(4, true);
 		}
 
+		void compile() {
+			juce::String info;
+			if (!jsEngine.loadFunction(getText().toStdString(), info)) {
+				giveInfo(info);
+			}
+			giveInfo("Compiled OK :D");
+		}
+
 		bool keyPressed(const juce::KeyPress& key) override {
 			if (key == juce::KeyPress(juce::KeyPress::returnKey, juce::ModifierKeys::shiftModifier, NULL)) {
-				juce::String info;
-				if (!jsEngine.loadFunction(getText().toStdString(), info)) {
-					giveInfo(info);
-				}
-				else {
-					giveInfo("Compiled OK :D");
-				}
+				compile();
 				return true;
 			}
 			return juce::CodeEditorComponent::keyPressed(key);
@@ -83,7 +93,6 @@ namespace Akasha {
 			loadContent(newText);
 		}
 
-
 	private:
 		void giveInfo(juce::String info) {
 			if (console != nullptr) {
@@ -93,32 +102,61 @@ namespace Akasha {
 		juce::TextEditor* console = nullptr; // debug purpose.
 		Akasha::JSEngine& jsEngine;
 	};
-
-
 }
 
-class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Slider::Listener {
+class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor{
 public:
-	AkashaAudioProcessorEditor(AkashaAudioProcessor&);
+	AkashaAudioProcessorEditor(AkashaAudioProcessor& p, juce::AudioProcessorValueTreeState& vts);
 	~AkashaAudioProcessorEditor() override;
 
 	void paint(juce::Graphics&) override;
 	void resized() override;
 
-	void sliderValueChanged(juce::Slider* slider) override;
+	juce::String getCodeString() const {
+		return formulaEditor.getText();
+	}
+
+	void setCodeString(const juce::String& newText) {
+		formulaEditor.setText(newText);
+	}
+
+	void setMacroText(const std::array<juce::String, 8>& newText) {
+		for (int i = 0; i < 8; ++i) {
+			macroSliders[i]->setLabelText(newText[i]);
+		}
+	}
+
+	const std::array<juce::String, 8> getMacroText() {
+		std::array<juce::String, 8> result;
+		for (int i = 0; i < 8; ++i) {
+			result[i] = macroSliders[i]->getLabelText();
+		}
+		return result;
+	}
+
+	void compile() {
+		formulaEditor.compile();
+	}
+
+	typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
+	typedef juce::AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
 
 private:
 	AkashaAudioProcessor& audioProcessor;
+	juce::AudioProcessorValueTreeState& valueTreeState;
+
 	// macro sliders.
 	juce::OwnedArray<Akasha::SliderWithLabel> macroSliders;
+	juce::OwnedArray<SliderAttachment> macroSliderAttachments;
 	// code editor.
 	juce::CodeDocument codeDocument;
-	// juce::CPlusPlusCodeTokeniser codeTokeniser;
+		// juce::CPlusPlusCodeTokeniser codeTokeniser;
 	JavascriptTokeniser codeTokeniser;
 	std::unique_ptr<Akasha::FormulaEditor> formulaEditorPointer;
 	Akasha::FormulaEditor& formulaEditor;
 	// code console.
 	juce::TextEditor code_console;
+	// custom look and feel.
 	Akasha::CustomLookAndFeel customLookAndFeel;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AkashaAudioProcessorEditor)
 };

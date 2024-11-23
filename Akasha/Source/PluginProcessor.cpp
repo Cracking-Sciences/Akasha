@@ -12,7 +12,13 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 #endif
 	)
 #endif
+	,
+	parameters(*this, nullptr, juce::Identifier("AkashaParameters"), Akasha::createParameterLayout())
 {
+	for (int i = 0; i < 8; ++i) {
+		macros[i] = parameters.getRawParameterValue("macro" + juce::String(i));
+	}
+
 	voices.resize(16);
 	for (auto i = 0; i < 16; i++) {
 		voices[i] = new Akasha::AkashaVoice(jsEngine, i, macros);
@@ -21,7 +27,7 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 	synth.addSound(new Akasha::AkashaSound());
 }
 
-AkashaAudioProcessor::~AkashaAudioProcessor() {
+AkashaAudioProcessor::~AkashaAudioProcessor(){
 }
 
 const juce::String AkashaAudioProcessor::getName() const {
@@ -116,7 +122,6 @@ void AkashaAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 	auto totalNumOutputChannels = getTotalNumOutputChannels();
 	for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
 		buffer.clear(i, 0, buffer.getNumSamples());
-
 	auto playHead = getPlayHead();
 	if (playHead != nullptr) {
 		juce::AudioPlayHead::CurrentPositionInfo position;
@@ -138,18 +143,42 @@ bool AkashaAudioProcessor::hasEditor() const {
 }
 
 juce::AudioProcessorEditor* AkashaAudioProcessor::createEditor() {
-	return new AkashaAudioProcessorEditor(*this);
+	return new AkashaAudioProcessorEditor(*this, parameters);
 }
 
 void AkashaAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
-	// You should use this method to store your parameters in the memory block.
-	// You could do that either as raw data, or use the XML or ValueTree classes
-	// as intermediaries to make it easy to save and load complex data.
+	auto state = parameters.copyState();
+	std::unique_ptr<juce::XmlElement> xml (state.createXml());
+
+	juce::XmlElement* textData = xml->createNewChildElement("Text");
+	if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
+		textData->setAttribute("code", editor->getCodeString());
+		for (int i = 0; i < 8; ++i) {
+			textData->setAttribute("macro" + juce::String(i), editor->getMacroText()[i]);
+		}
+	}
+
+	copyXmlToBinary (*xml, destData);
 }
 
 void AkashaAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
-	// You should use this method to restore your parameters from this memory block,
-	// whose contents will have been created by the getStateInformation() call.
+	std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+	if (xmlState.get() != nullptr) {
+		if (xmlState->hasTagName(parameters.state.getType())) {
+			parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
+			if (auto* textData = xmlState->getChildByName("Text")) {
+				if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
+					editor->setCodeString(textData->getStringAttribute("code"));
+					editor->compile();
+					std::array<juce::String, 8> macroText;
+					for (int i = 0; i < 8; ++i) {
+						macroText[i] = textData->getStringAttribute("macro" + juce::String(i));
+					}
+					editor->setMacroText(macroText);
+				}
+			}
+		}
+	}
 }
 
 // This creates new instances of the plugin..

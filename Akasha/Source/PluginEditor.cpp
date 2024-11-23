@@ -48,8 +48,9 @@ function main(args){
 
 )";
 
-AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p) :
+AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, juce::AudioProcessorValueTreeState& vts):
 	AudioProcessorEditor(&p),
+	valueTreeState (vts),
 	audioProcessor(p),
 	codeDocument(),
 	codeTokeniser(),
@@ -62,7 +63,13 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p) 
 		auto* sliderWithLabel = new Akasha::SliderWithLabel("m" + juce::String(i));
 		addAndMakeVisible(sliderWithLabel);
 		macroSliders.add(sliderWithLabel);
-		sliderWithLabel->getSlider().addListener(this);
+
+		auto* attachment = new SliderAttachment(
+				valueTreeState,
+				"macro" + juce::String(i),
+				sliderWithLabel->getSlider()
+			);
+		macroSliderAttachments.add(attachment);
 	}
 
 	// code editor.
@@ -89,8 +96,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p) 
 	}
 
 	// First Compile
-	juce::KeyPress shiftEnterKeyPress(juce::KeyPress::returnKey, juce::ModifierKeys::shiftModifier, 0);
-	formulaEditor.keyPressed(shiftEnterKeyPress);
+	formulaEditor.compile();
 }
 
 AkashaAudioProcessorEditor::~AkashaAudioProcessorEditor() {
@@ -111,7 +117,7 @@ void AkashaAudioProcessorEditor::resized() {
 	textEditorBox.flexDirection = juce::FlexBox::Direction::column;
 	textEditorBox.justifyContent = juce::FlexBox::JustifyContent::center;
 	textEditorBox.items.add(juce::FlexItem(formulaEditor).withFlex(1.0f));
-	textEditorBox.items.add(juce::FlexItem(code_console).withFlex(0.3f));
+	textEditorBox.items.add(juce::FlexItem(code_console).withMinHeight(40.0f));
 
 	macroSlidersBox.flexDirection = juce::FlexBox::Direction::row;
 	macroSlidersBox.flexWrap = juce::FlexBox::Wrap::wrap;
@@ -121,19 +127,7 @@ void AkashaAudioProcessorEditor::resized() {
 	}
 
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));
-	mainFlexBox.items.add(juce::FlexItem(macroSlidersBox).withMinHeight(80.f));
+	mainFlexBox.items.add(juce::FlexItem(macroSlidersBox).withMinHeight(100.f));
 
 	mainFlexBox.performLayout(getLocalBounds());
-}
-
-void AkashaAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) {
-	// Handle slider value change
-	std::array<double, 8> macros = { 0.0 };
-	for (int i = 0; i < macroSliders.size(); ++i) {
-		if (slider == &macroSliders[i]->getSlider()) {
-			// Do something with the slider value
-		}
-		macros[i] = macroSliders[i]->getSlider().getValue();
-	}
-	audioProcessor.setMacros(macros);
 }
