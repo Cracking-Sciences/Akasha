@@ -47,7 +47,7 @@ namespace Akasha {
 #include "v8-local-handle.h"
 #include "v8-primitive.h"
 #include "v8-script.h"
-
+#include <mutex>
 
 namespace Akasha {
 	class V8GlobalManager {
@@ -109,6 +109,8 @@ namespace Akasha {
 		}
 
 		bool loadFunction(const std::string& source_code, juce::String& info) {
+			std::lock_guard<std::mutex> lock(mutex); 
+			function_ready = false;
 			v8::Isolate::Scope isolate_scope(isolate);
 			v8::HandleScope handle_scope(isolate);
 			for (int i = 0; i < num_cached_contexts; i++) {
@@ -155,6 +157,7 @@ namespace Akasha {
 		}
 
 		bool callFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId = 0) {
+			std::lock_guard<std::mutex> lock(mutex); 
 			// if there is a problem (return false), the info will be filled with the error message.
 			voiceId = voiceId % num_cached_contexts;
 			v8::Global<v8::Context>& cached_context = cached_context_list[voiceId];
@@ -275,6 +278,7 @@ namespace Akasha {
 		const int array_buffer_len = 20;
 
 		bool function_ready = false;
+		mutable std::mutex mutex; 
 	};
 }
 #endif
