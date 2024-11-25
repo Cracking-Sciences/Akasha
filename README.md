@@ -7,22 +7,19 @@ The ultimate answer to audio tools.
 ## Overview
 
 Focus on the dsp kernel to design your sounds (or patterns, or even tracks) directly in your DAW. Write down your idea in the handy javascrpit.
-
 Akasha embeds [V8](https://v8.dev/) and offers high performance javascript execution.
 
 
 ## How to Use
 
 ### Install
-Use the standalone version or open the vst3 version in your DAW.
+Open the standalone version directly or open the vst3 version in your DAW.
 
-### Use
 
-#### Code Guide
+### Code Guide
 The entry of the execution is `function main(args)`, where `args` provides all the information you need for a single note hit.
 
-**input args**
-
+**input args:**
 |Default Name|Explanation|
 |---|---|
 |m0~m7|Macro knobs' values in float|
@@ -37,23 +34,25 @@ The entry of the execution is `function main(args)`, where `args` provides all t
 |justPressed|Whether this main call is the trigger frame of the note. 0 or 1|
 |justReleased|TODO feature|
 
-**return**
+**return:** 
+- Return a float value between -1~1 for mono sound.
+- Return an array of float value between -1~1 for stereo or multi-channel sound.
 
-Return a float value between -1~1 for mono sound.
+`function main(args)` is called for each sample point at the sample rate. Other functions, classes, and global variables stay there, memorizing their states.
 
-Return an array of float value between -1~1 for stereo or multi-channel sound.
-
-#### Interact
+### Interact
 
 
 To compile your code, press `shift` + `enter` or defocus the editor.
-
 Once your code is compiled, up to 16 notes can be pressed simutaneously, each with its own code context and isolated global variables.
 
+Macro Knobs can be automatically controlled by your DAW.
 
 ### TODO
 
-- Drawable LFO functions and its UI. Can be used as oscilator shape, modulation source, etc.
-- Support release sound by the setting "process window after releasing a note".
-- MPE.
-- Inspector functions to track variables or arrays.
+- 🔥Drawable LFO functions and their UI. Can be used as oscilator shape, modulation source, etc. 
+- 🔥Support release sound by the setting "process window after releasing a note".
+- 🔥MPE.
+- 🔥Legato and glide.
+- 🤓Inspector functions and their UI to track variables or arrays. 
+- 🤔Oversampling.
