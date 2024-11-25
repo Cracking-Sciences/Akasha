@@ -43,20 +43,15 @@ function freq_shift(freq){
 }
 
 function main(args){
-    var macros = args.macros;
-    var tempo = args.tempo;
-    var sampleRate = args.sampleRate;
-    var time = args.time;
-    var beat = args.beat;
-    var note = args.note;
-    var velocity = args.velocity;
+    var [m0,m1,m2,m3,m4,m5,m6,m7, tempo, beat, sampleRate, bufferLen, bufferPos, 
+        time, note, velocity, justPressed, justReleased] = args;
     // calc freq
     var freq = midiNoteToFreq(note) / 4;
     // unison
     const unisonVoices = 2;
-    var detuneAmount = macros[3]*0.1;
+    var detuneAmount = m3*0.1;
 
-    var harmonics = 1024 * exponentialMapping(macros[1]);
+    var harmonics = 1024 * exponentialMapping(m1);
     var unisonOutput = 0;
     var rand = new Array(unisonVoices);
     for (var j = 0; j < unisonVoices; j++){
@@ -69,7 +64,7 @@ function main(args){
         for (var i = 0; i < harmonics; i++) {
             var basic_freq = freq * (i + 1) * (1 + rand[j])
             voiceOutput += sinUnit(
-                (mix(macros[2], freq_shift(basic_freq), basic_freq)
+                (mix(m2, freq_shift(basic_freq), basic_freq)
                 * time), 
                 1 / (i + 1), 
             phaseOffset);
@@ -77,6 +72,6 @@ function main(args){
         unisonOutput += voiceOutput;
     }
 
-    return unisonOutput*macros[0];
+    return unisonOutput*m0;
 }
 

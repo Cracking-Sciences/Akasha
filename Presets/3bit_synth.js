@@ -17,14 +17,14 @@ function dcBlocker(input, alpha = 0.995) {
     return output;
 }
 
-function shift16(a, bits) {
+function shift8(a, bits) {
     if (bits > 0) {
-        bits = bits % 16;
-        return (a << bits) % 256 + (a >> (16 - bits)) % 256;
+        bits = bits % 8;
+        return (a << bits) % 256 + (a >> (8 - bits)) % 256;
     } else {
         bits = -bits;
-        bits = bits % 16;
-        return (a >> bits) % 256 + (a << (16 - bits)) % 256;
+        bits = bits % 8;
+        return (a >> bits) % 256 + (a << (8 - bits)) % 256;
     }
 }
 
@@ -113,14 +113,8 @@ function notTernary(a) {
 
 
 function main(args) {
-    var macros = args.macros;
-    var tempo = args.tempo;
-    var sampleRate = args.sampleRate;
-    var time = args.time;
-    var beat = args.beat;
-    var note = args.note;
-    var velocity = args.velocity;
-
+    var [m0,m1,m2,m3,m4,m5,m6,m7, tempo, beat, sampleRate, bufferLen, bufferPos, 
+        time, note, velocity, justPressed, justReleased] = args;
     // Calculate frequency
     var freq = midiNoteToFreq(note);
 
@@ -128,16 +122,16 @@ function main(args) {
     var output = 
         xorTernary(
             xorTernary(
-            shift5Ternary(t, 4 * macros[1]),
+            shift5Ternary(t, 4 * m1),
             shift5Ternary(t, -1)
             ),
-            t*macros[2]*11
+            t*m2*11
         );
 
     var slowAttack = time < 1.0 ? time : 1.0;
 
     output = dcBlocker(
-        (output*1.0 / ternary5 -0.5)* macros[0] % 1.0 * slowAttack
+        (output*1.0 / ternary5 -0.5)* m0 % 1.0 * slowAttack
     );
     return output;
 }
