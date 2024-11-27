@@ -20,6 +20,22 @@ namespace Akasha {
 		bool justPressed; // just note on
 		bool justReleased; // just note off
 	};
+
+	struct JSMainWrapperParams {
+		std::array<std::atomic<float>*, 8> macros;
+		int numSamples;
+		int numChannels;
+		double sampleRate;
+		double tempo;
+		double beat;
+		bool justPressed;
+		bool justReleased;
+
+		int note;
+		float velocity;
+
+		std::vector<std::vector<float*>> outputBuffer; // numChannels -> numSamples
+	};
 }
 
 
