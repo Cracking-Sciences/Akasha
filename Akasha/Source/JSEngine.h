@@ -84,24 +84,12 @@ namespace Akasha {
 			auto& globalManager = V8GlobalManager::getInstance();
 			create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 			isolate = v8::Isolate::New(create_params);
-			cached_context_list.resize(num_cached_contexts);
-			cached_global_list.resize(num_cached_contexts);
-			cached_function_list.resize(num_cached_contexts);
-			cached_args_list.resize(num_cached_contexts);
+			cachedList.resize(num_cached_contexts);
 		}
 
 		~JSEngine() {
-			for (auto& cached_global : cached_global_list) {
-				cached_global.Reset();
-			}
-			for (auto& cached_function : cached_function_list) {
-				cached_function.Reset();
-			}
-			for (auto& cached_args : cached_args_list) {
-				cached_args.Reset();
-			}
-			for (auto& cached_context : cached_context_list) {
-				cached_context.Reset();
+			for (auto& cached : cachedList) {
+				cached.Reset(isolate);
 			}
 			if (isolate) {
 				isolate->Dispose();
@@ -115,7 +103,7 @@ namespace Akasha {
 			v8::Isolate::Scope isolate_scope(isolate);
 			v8::HandleScope handle_scope(isolate);
 			for (int i = 0; i < num_cached_contexts; i++) {
-				auto& context = cached_context_list[i];
+				auto& context = cachedList[i].context;
 				context.Reset(isolate, v8::Context::New(isolate));
 				v8::Context::Scope context_scope(context.Get(isolate));
 				v8::TryCatch try_catch(isolate);
@@ -146,12 +134,9 @@ namespace Akasha {
 					return false;
 				}
 
-				cached_function_list[i].Reset(isolate, func_value.As<v8::Function>());
-
-				cached_global_list[i].Reset(isolate, cached_context_list[i].Get(isolate)->Global());
-
-				cached_args_list[i].Reset(isolate, v8::ArrayBuffer::New(isolate, array_buffer_len * sizeof(double)));
-
+				cachedList[i].function.Reset(isolate, func_value.As<v8::Function>());
+				cachedList[i].globalObject.Reset(isolate, context.Get(isolate)->Global());
+				cachedList[i].arrayBufferArguments.Reset(isolate, v8::ArrayBuffer::New(isolate, array_buffer_len * sizeof(double)));
 			}
 			function_ready = true;
 			return true;
@@ -161,9 +146,9 @@ namespace Akasha {
 			std::lock_guard<std::mutex> lock(mutex); 
 			// if there is a problem (return false), the info will be filled with the error message.
 			voiceId = voiceId % num_cached_contexts;
-			v8::Global<v8::Context>& cached_context = cached_context_list[voiceId];
-			v8::Global<v8::Object>& cached_global = cached_global_list[voiceId];
-			v8::Global<v8::Function>& function = cached_function_list[voiceId];
+			v8::Global<v8::Context>& cached_context = cachedList[voiceId].context;
+			v8::Global<v8::Object>& cached_global = cachedList[voiceId].globalObject;
+			v8::Global<v8::Function>& function = cachedList[voiceId].function;
 
 			if (cached_context.IsEmpty()) {
 				info = juce::String("Not compiled.\n");
@@ -177,7 +162,7 @@ namespace Akasha {
 			v8::TryCatch try_catch(isolate);
 
 			// Convert the C++ array to a JavaScript array
-			auto js_args = convertToJSObject(args, voiceId);
+			auto& js_args = prepareArguments(args, voiceId);
 
 			// Prepare arguments for the function (only one argument, the array)
 			v8::Local<v8::Value> js_func_args[1] = { js_args };
@@ -231,8 +216,9 @@ namespace Akasha {
 		}
 
 	private:
-		v8::Local<v8::Float64Array> convertToJSObject(const JSFuncParams& params, int voiceId) {
-			if (cached_args_list[voiceId].IsEmpty()) {
+		v8::Local<v8::Float64Array> const prepareArguments(const JSFuncParams& params, int voiceId){
+			if (cachedList[voiceId].arrayBufferArguments.IsEmpty() ||
+				cachedList[voiceId].float64ArrayArguments.IsEmpty()) {
 				auto backingStore = v8::ArrayBuffer::NewBackingStore(
 					new double[array_buffer_len],
 					array_buffer_len * sizeof(double),
@@ -242,16 +228,19 @@ namespace Akasha {
 					nullptr
 				);
 				v8::Local<v8::ArrayBuffer> arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(backingStore));
-				cached_args_list[voiceId].Reset(isolate, arrayBuffer);
+				cachedList[voiceId].arrayBufferArguments.Reset(isolate, arrayBuffer);
+
+				v8::Local<v8::Float64Array> float64Array = v8::Float64Array::New(arrayBuffer, 0, array_buffer_len);
+				cachedList[voiceId].float64ArrayArguments.Reset(isolate, float64Array);
 			}
 
-			v8::Local<v8::ArrayBuffer> arrayBuffer = cached_args_list[voiceId].Get(isolate);
+			v8::Local<v8::ArrayBuffer> arrayBuffer = cachedList[voiceId].arrayBufferArguments.Get(isolate);
+			
 			double* bufferData = static_cast<double*>(arrayBuffer->GetBackingStore()->Data());
 
 			for (size_t i = 0; i < params.macros.size(); ++i) {
 				bufferData[i] = static_cast<double>(*params.macros[i]);
 			}
-
 			bufferData[8] = params.tempo;
 			bufferData[9] = params.beat;
 			bufferData[10] = params.sampleRate;
@@ -263,17 +252,38 @@ namespace Akasha {
 			bufferData[16] = params.justPressed ? 1.0 : 0.0;
 			bufferData[17] = params.justReleased ? 1.0 : 0.0;
 
-			return v8::Float64Array::New(arrayBuffer, 0, array_buffer_len);
+			v8::Local<v8::Float64Array> float64Array = cachedList[voiceId].float64ArrayArguments.Get(isolate);
+			return float64Array;
 		}
+
+		struct Cache {
+			v8::Global<v8::Context> context;
+			v8::Global<v8::Object> globalObject;
+			v8::Global<v8::Function> function;
+			v8::Global<v8::ArrayBuffer> arrayBufferArguments; // for arguments. Controlling underlying buffer
+			v8::Global<v8::Float64Array> float64ArrayArguments; // view of the array buffer
+
+			Cache() = default;
+
+			Cache(const Cache&) = delete;
+			Cache& operator=(const Cache&) = delete;
+			Cache(Cache&&) = default;
+			Cache& operator=(Cache&&) = default;
+
+			void Reset(v8::Isolate* isolate) {
+				context.Reset();
+				globalObject.Reset();
+				function.Reset();
+				arrayBufferArguments.Reset();
+				float64ArrayArguments.Reset();
+			}
+		};
+
+		std::vector<Cache> cachedList;
 
 		v8::Isolate::CreateParams create_params;
 		v8::Isolate* isolate;
 		std::unique_ptr<v8::Platform> platform;
-
-		std::vector<v8::Global<v8::Context>> cached_context_list;
-		std::vector<v8::Global<v8::Object>> cached_global_list;
-		std::vector<v8::Global<v8::Function>> cached_function_list;
-		std::vector<v8::Global<v8::ArrayBuffer>> cached_args_list;
 
 		const int num_cached_contexts = 16;
 		const int array_buffer_len = 20;
