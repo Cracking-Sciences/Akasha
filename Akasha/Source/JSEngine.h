@@ -50,6 +50,7 @@ namespace Akasha {
 #include <mutex>
 
 namespace Akasha {
+
 	class V8GlobalManager {
 	public:
 		static V8GlobalManager& getInstance() {
