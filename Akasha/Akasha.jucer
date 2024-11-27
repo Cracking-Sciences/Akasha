@@ -6,6 +6,8 @@
   <MAINGROUP id="LKIRRr" name="Akasha">
     <GROUP id="{3A77558B-6FCD-E060-4D31-37E331F68564}" name="Source">
       <GROUP id="{A338E764-04E7-6973-3AB0-22A9C378D2F2}" name="assets">
+        <FILE id="EL8F99" name="mainWrapper.h" compile="0" resource="0" file="Source/assets/mainWrapper.h"/>
+        <FILE id="KbrXiJ" name="mainWrapper.js" compile="0" resource="1" file="Source/assets/mainWrapper.js"/>
         <GROUP id="{CAAAE4B0-25ED-AD0A-9926-74DEFC6578A0}" name="JsTokeniser">
           <FILE id="h1u55P" name="JavascriptCodeTokeniser.cpp" compile="1" resource="0"
                 file="Source/assets/JsTokeniser/JavascriptCodeTokeniser.cpp"/>
@@ -19,6 +21,7 @@
       </GROUP>
       <FILE id="GCidcQ" name="MyLookAndFeel.h" compile="0" resource="0" file="Source/MyLookAndFeel.h"/>
       <FILE id="fMFupV" name="JSEngine.h" compile="0" resource="0" file="Source/JSEngine.h"/>
+      <FILE id="v4FfV7" name="JSEngine.cpp" compile="1" resource="0" file="Source/JSEngine.cpp"/>
       <FILE id="JpR7IF" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="hdgULS" name="PluginProcessor.h" compile="0" resource="0"
