@@ -98,7 +98,7 @@ namespace Akasha {
 		}
 
 		bool loadFunction(const std::string& source_code, juce::String& info) {
-			std::lock_guard<std::mutex> lock(mutex); 
+			std::lock_guard<std::mutex> lock(mutex);
 			function_ready = false;
 			v8::Isolate::Scope isolate_scope(isolate);
 			v8::HandleScope handle_scope(isolate);
@@ -136,14 +136,13 @@ namespace Akasha {
 
 				cachedList[i].function.Reset(isolate, func_value.As<v8::Function>());
 				cachedList[i].globalObject.Reset(isolate, context.Get(isolate)->Global());
-				cachedList[i].arrayBufferArguments.Reset(isolate, v8::ArrayBuffer::New(isolate, array_buffer_len * sizeof(double)));
 			}
 			function_ready = true;
 			return true;
 		}
 
 		bool callFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId = 0) {
-			std::lock_guard<std::mutex> lock(mutex); 
+			std::lock_guard<std::mutex> lock(mutex);
 			// if there is a problem (return false), the info will be filled with the error message.
 			voiceId = voiceId % num_cached_contexts;
 			v8::Global<v8::Context>& cached_context = cachedList[voiceId].context;
@@ -157,7 +156,11 @@ namespace Akasha {
 			}
 			v8::Isolate::Scope isolate_scope(isolate);
 			v8::HandleScope handle_scope(isolate);
-			v8::Context::Scope context_scope(cached_context.Get(isolate));
+			auto cached_context_local = cached_context.Get(isolate);
+			auto cached_global_local = cached_global.Get(isolate);
+			auto cached_function_local = function.Get(isolate);
+
+			v8::Context::Scope context_scope(cached_context_local);
 			// return false; // debug
 			v8::TryCatch try_catch(isolate);
 
@@ -168,7 +171,7 @@ namespace Akasha {
 			v8::Local<v8::Value> js_func_args[1] = { js_args };
 			v8::Local<v8::Value> result;
 
-			if (!function.Get(isolate)->Call(cached_context.Get(isolate), cached_global.Get(isolate), 1, js_func_args).ToLocal(&result)) {
+			if (!cached_function_local->Call(cached_context_local, cached_global_local, 1, js_func_args).ToLocal(&result)) {
 				v8::String::Utf8Value error(isolate, try_catch.Exception());
 				std::string error_str(*error);
 				info = juce::String(error_str) + "\n";
@@ -184,9 +187,9 @@ namespace Akasha {
 				for (uint32_t i = 0; i < result_vector.size(); i++) {
 					if (i < length) {
 						v8::Local<v8::Value> element;
-						if (result_array->Get(cached_context.Get(isolate), i).ToLocal(&element)) {
+						if (result_array->Get(cached_context_local, i).ToLocal(&element)) {
 							if (element->IsNumber()) {
-								result_vector[i] = element->NumberValue(cached_context.Get(isolate)).ToChecked();
+								result_vector[i] = element->NumberValue(cached_context_local).ToChecked();
 							}
 							else {
 								result_vector[i] = 0.0; // Default to 0.0 if not a number
@@ -200,7 +203,7 @@ namespace Akasha {
 			}
 			else if (result->IsNumber()) {
 				for (uint32_t i = 0; i < result_vector.size(); i++) {
-					result_vector[i] = (result->NumberValue(cached_context.Get(isolate)).ToChecked());
+					result_vector[i] = (result->NumberValue(cached_context_local).ToChecked());
 				}
 			}
 			else {
@@ -216,7 +219,7 @@ namespace Akasha {
 		}
 
 	private:
-		v8::Local<v8::Float64Array> const prepareArguments(const JSFuncParams& params, int voiceId){
+		v8::Local<v8::Float64Array> const prepareArguments(const JSFuncParams& params, int voiceId) {
 			if (cachedList[voiceId].arrayBufferArguments.IsEmpty() ||
 				cachedList[voiceId].float64ArrayArguments.IsEmpty()) {
 				auto backingStore = v8::ArrayBuffer::NewBackingStore(
@@ -229,13 +232,11 @@ namespace Akasha {
 				);
 				v8::Local<v8::ArrayBuffer> arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(backingStore));
 				cachedList[voiceId].arrayBufferArguments.Reset(isolate, arrayBuffer);
-
 				v8::Local<v8::Float64Array> float64Array = v8::Float64Array::New(arrayBuffer, 0, array_buffer_len);
 				cachedList[voiceId].float64ArrayArguments.Reset(isolate, float64Array);
 			}
 
 			v8::Local<v8::ArrayBuffer> arrayBuffer = cachedList[voiceId].arrayBufferArguments.Get(isolate);
-			
 			double* bufferData = static_cast<double*>(arrayBuffer->GetBackingStore()->Data());
 
 			for (size_t i = 0; i < params.macros.size(); ++i) {
@@ -264,7 +265,6 @@ namespace Akasha {
 			v8::Global<v8::Float64Array> float64ArrayArguments; // view of the array buffer
 
 			Cache() = default;
-
 			Cache(const Cache&) = delete;
 			Cache& operator=(const Cache&) = delete;
 			Cache(Cache&&) = default;
@@ -289,7 +289,7 @@ namespace Akasha {
 		const int array_buffer_len = 20;
 
 		bool function_ready = false;
-		mutable std::mutex mutex; 
+		mutable std::mutex mutex;
 	};
 }
 #endif
