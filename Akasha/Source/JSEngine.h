@@ -23,9 +23,9 @@ namespace Akasha {
 		std::array<std::atomic<float>*, 8> macros;
 		int numSamples;
 		int numChannels;
-		double sampleRate;
-		double tempo;
-		double beat;
+		float sampleRate;
+		float tempo;
+		float beat;
 		bool justPressed;
 		bool justReleased;
 
@@ -91,10 +91,13 @@ namespace Akasha {
 			v8::Global<v8::Context> context;
 			v8::Global<v8::Object> globalObject;
 			v8::Global<v8::Function> mainWrapperFunction;
-			std::vector<v8::Global<v8::ArrayBuffer>> channelBuffers;
-			v8::Global<v8::Array> arrayAudioBuffer;
+
 			v8::Global<v8::ArrayBuffer> arrayBufferArgs1;
+			v8::Global<v8::Float32Array> arrayBufferArgs1View;
 			v8::Global<v8::ArrayBuffer> arrayBufferArgs2;
+			v8::Global<v8::Float32Array> arrayBufferArgs2View;
+			std::vector<v8::Global<v8::ArrayBuffer>> channelBuffers;
+			v8::Global<v8::Array> channelBuffersView;
 			Cache() = default;
 			Cache(const Cache&) = delete;
 			Cache& operator=(const Cache&) = delete;
@@ -104,7 +107,7 @@ namespace Akasha {
 		};
 
 		void prepareMainWrapperArguments(const JSMainWrapperParams& params, int voiceId);
-		void allocateArrayAudioBuffer(const JSMainWrapperParams& params, Cache& cache);
+		void allocateChannelBuffers(const JSMainWrapperParams& params, Cache& cache);
 		bool compileAndRunScript(const std::string& scriptSource, v8::Local<v8::Context> context, juce::String& info);
 		v8::Local<v8::Function> getGlobalFunction(const std::string& functionName, v8::Local<v8::Context> context, juce::String& info);
 
@@ -114,7 +117,7 @@ namespace Akasha {
 		std::vector<Cache> cachedList;
 
 		const int num_cached_contexts = 16;
-		const int array_buffer_len = 20;
+		const int infoArg_len = 10;
 		const int macro_len = 8;
 		bool function_ready = false;
 		mutable std::mutex mutex;

@@ -4,35 +4,20 @@ function createMainWrapper() {
     var time = 0.0;
     var timeAtReleased = 0.0;
     var liveBeat = 0.0;
+    var interpolatedMacros = [];
+    var sharedResultArray = []; // Shared result array for single-channel output
+
     return {
         mainWrapper: function (args1, args2, buffer) {
-            // args1: Array of macros
-            // args2: Array of other parameters
-            // buffer: A fixed 2D floating-point array representing the audio buffer for all channels
-            // if (!Array.isArray(buffer)) {
-            //     throw new Error(`Invalid buffer type: ${typeof buffer}. Expected a 2D array.`);
-            // }
-            // buffer.forEach((channel, index) => {
-            //     if (!Array.isArray(channel)) {
-            //         throw new Error(`Invalid buffer structure at channel ${index}: Expected an array, but got ${Object.prototype.toString.call(channel)}.`);
-            //     }
-            //     channel.forEach((sample, sampleIndex) => {
-            //         if (typeof sample !== "number") {
-            //             throw new Error(`Invalid buffer structure at channel ${index}, sample ${sampleIndex}: Expected a number, but got ${typeof sample} (${sample}).`);
-            //         }
-            //     });
-            // });
-
             var currentMacros = args1;
-            var [
+            let [
                 numSamples, numChannels, sampleRate, tempo, beat, justPressed, justReleased, note, velocity
             ] = args2;
 
-            var interpolatedMacros;
-            var timeSinceReleased;
-
+            // Ensure interpolatedMacros matches the size of currentMacros
             if (!prevMacros) {
-                prevMacros = currentMacros.slice();
+                prevMacros = currentMacros.slice(); // Initialize only once
+                interpolatedMacros = new Array(currentMacros.length).fill(0);
             }
 
             if (justPressed) {
@@ -45,42 +30,50 @@ function createMainWrapper() {
 
             liveBeat = beat;
 
+            // Precompute constant factor
+            const tempoFactor = tempo / 60.0 / sampleRate;
+
             for (var i = 0; i < numSamples; i++) {
-                // temp var
-                var t = (i + 1)/ (numSamples);
-                interpolatedMacros = currentMacros.map((current, index) => 
-                    t * current + (1.0 - t) * prevMacros[index]
-                );
-                timeSinceReleased = time - timeAtReleased;
+                // Precompute interpolation factor
+                const t = (i + 1) / numSamples;
+
+                // Interpolate macros
+                for (var j = 0; j < currentMacros.length; j++) {
+                    interpolatedMacros[j] = t * currentMacros[j] + (1.0 - t) * prevMacros[j];
+                }
+
+                // Calculate time since release
+                const timeSinceReleased = time - timeAtReleased;
 
                 // Call main and handle the result
-                var result = main([
-                    ...interpolatedMacros, tempo, liveBeat, sampleRate, numSamples, 
+                let result = main([
+                    ...interpolatedMacros, tempo, liveBeat, sampleRate, numSamples,
                     i, time, note, velocity, justPressed, justReleased, timeSinceReleased
                 ]);
 
-                // Fill the buffer directly
+                // Normalize single number result to array
                 if (typeof result === "number") {
-                    for (var channel = 0; channel < numChannels; channel++) {
-                        buffer[channel][i] = result;
-                    }
-                } else if (Array.isArray(result)) {
-                    for (var channel = 0; channel < numChannels; channel++) {
-                        if (channel < result.length) {
-                            buffer[channel][i] = result[channel];
-                        } else {
-                            buffer[channel][i] = result[result.length - 1];
-                        }
-                    }
+                    sharedResultArray[0] = result;
+                    result = sharedResultArray;
                 }
 
-                // Update
+                // Fill the buffer directly
+                for (var channel = 0; channel < numChannels; channel++) {
+                    const channelBuffer = buffer[channel]; // Cache channel reference
+                    channelBuffer[i] = channel < result.length ? result[channel] : result[result.length - 1];
+                }
+
+                // Update time and beat
                 time += 1.0 / sampleRate;
-                liveBeat += tempo / 60.0 / sampleRate;
+                liveBeat += tempoFactor;
                 justPressed = false;
                 justReleased = false;
             }
-            prevMacros = currentMacros.slice();
+
+            // Update previous macros
+            for (var j = 0; j < currentMacros.length; j++) {
+                prevMacros[j] = currentMacros[j];
+            }
         }
     };
 }

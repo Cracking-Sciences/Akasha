@@ -95,9 +95,9 @@ namespace Akasha {
 		v8::TryCatch try_catch(isolate);
 
 		prepareMainWrapperArguments(args, voiceId);
-		auto js_args1 = v8::Float64Array::New(cachedList[voiceId].arrayBufferArgs1.Get(isolate),0,macro_len);
-		auto js_args2 = v8::Float64Array::New(cachedList[voiceId].arrayBufferArgs2.Get(isolate),0,array_buffer_len);
-		auto js_args_buffer = cachedList[voiceId].arrayAudioBuffer.Get(isolate);
+		auto js_args1 = cachedList[voiceId].arrayBufferArgs1View.Get(isolate);
+		auto js_args2 = cachedList[voiceId].arrayBufferArgs2View.Get(isolate);
+		auto js_args_buffer = cachedList[voiceId].channelBuffersView.Get(isolate);
 		v8::Local<v8::Value> js_func_args[3] = { js_args1, js_args2, js_args_buffer };
 		v8::Local<v8::Value> result;
 		if (!cached_function_local->Call(cached_context_local, cached_global_local, 3, js_func_args).ToLocal(&result)) {
@@ -141,11 +141,11 @@ namespace Akasha {
 		auto& cache = cachedList[voiceId];
 		// buffer
 		bool needsReallocation = false;
-		if (cache.arrayAudioBuffer.IsEmpty()) {
+		if (cache.channelBuffersView.IsEmpty()) {
 			needsReallocation = true;
 		}
 		else {
-			v8::Local<v8::Array> audioBuffer = cache.arrayAudioBuffer.Get(isolate);
+			v8::Local<v8::Array> audioBuffer = cache.channelBuffersView.Get(isolate);
 			if (audioBuffer->Length() != params.numChannels) {
 				needsReallocation = true;
 			}
@@ -165,59 +165,60 @@ namespace Akasha {
 			}
 		}
 		if (needsReallocation) {
-			allocateArrayAudioBuffer(params, cache);
+			allocateChannelBuffers(params, cache);
 		}
 		// args1
 		if (cache.arrayBufferArgs1.IsEmpty()) {
 			auto backingStore = v8::ArrayBuffer::NewBackingStore(
-				new double[macro_len],
-				macro_len * sizeof(double),
+				new float[macro_len],
+				macro_len * sizeof(float),
 				[](void* data, size_t length, void* deleterData) {
-					delete[] static_cast<double*>(data);
+					delete[] static_cast<float*>(data);
 				},
 				nullptr
 			);
 			v8::Local<v8::ArrayBuffer> arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(backingStore));
 			cache.arrayBufferArgs1.Reset(isolate, arrayBuffer);
+			cache.arrayBufferArgs1View.Reset(isolate, v8::Float32Array::New(arrayBuffer, 0, macro_len));
 		}
 		// args2
 		if (cache.arrayBufferArgs2.IsEmpty()) {
 			auto backingStore = v8::ArrayBuffer::NewBackingStore(
-				new double[array_buffer_len],
-				array_buffer_len * sizeof(double),
+				new float[infoArg_len],
+				infoArg_len * sizeof(float),
 				[](void* data, size_t length, void* deleterData) {
-					delete[] static_cast<double*>(data);
+					delete[] static_cast<float*>(data);
 				},
 				nullptr
 			);
 			v8::Local<v8::ArrayBuffer> arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(backingStore));
 			cache.arrayBufferArgs2.Reset(isolate, arrayBuffer);
+			cache.arrayBufferArgs2View.Reset(isolate, v8::Float32Array::New(arrayBuffer, 0, infoArg_len));
 		}
 		// set data
-		double* bufferData1 = static_cast<double*>(cache.arrayBufferArgs1.Get(isolate)->GetBackingStore()->Data());
-		double* bufferData2 = static_cast<double*>(cache.arrayBufferArgs2.Get(isolate)->GetBackingStore()->Data());
+		float* bufferData1 = static_cast<float*>(cache.arrayBufferArgs1.Get(isolate)->GetBackingStore()->Data());
+		float* bufferData2 = static_cast<float*>(cache.arrayBufferArgs2.Get(isolate)->GetBackingStore()->Data());
 		for (size_t i = 0; i < params.macros.size(); ++i) {
-			bufferData1[i] = static_cast<double>(*params.macros[i]);
+			bufferData1[i] = static_cast<float>(*params.macros[i]);
 		}
-		bufferData2[0] = static_cast<double>(params.numSamples);
-		bufferData2[1] = static_cast<double>(params.numChannels);
-		bufferData2[2] = static_cast<double>(params.sampleRate);
-		bufferData2[3] = static_cast<double>(params.tempo);
-		bufferData2[4] = static_cast<double>(params.beat);
-		bufferData2[5] = static_cast<double>(params.justPressed ? 1.0 : 0.0);
-		bufferData2[6] = static_cast<double>(params.justReleased ? 1.0 : 0.0);
-		bufferData2[7] = static_cast<double>(params.note);
-		bufferData2[8] = static_cast<double>(params.velocity);
+		bufferData2[0] = static_cast<float>(params.numSamples);
+		bufferData2[1] = static_cast<float>(params.numChannels);
+		bufferData2[2] = static_cast<float>(params.sampleRate);
+		bufferData2[3] = static_cast<float>(params.tempo);
+		bufferData2[4] = static_cast<float>(params.beat);
+		bufferData2[5] = static_cast<float>(params.justPressed ? 1.0 : 0.0);
+		bufferData2[6] = static_cast<float>(params.justReleased ? 1.0 : 0.0);
+		bufferData2[7] = static_cast<float>(params.note);
+		bufferData2[8] = static_cast<float>(params.velocity);
 	}
 
-	void JSEngine::allocateArrayAudioBuffer(const JSMainWrapperParams& params, Cache& cache) {
+	void JSEngine::allocateChannelBuffers(const JSMainWrapperParams& params, Cache& cache) {
 		for (auto& channelBuffer : cache.channelBuffers) {
 			channelBuffer.Reset();
 		}
 		if (cache.channelBuffers.size() != params.numChannels) {
 			cache.channelBuffers.resize(params.numChannels);
 		}
-
 		v8::Local<v8::Array> audioBuffer = v8::Array::New(isolate, params.numChannels);
 		for (int channel = 0; channel < params.numChannels; ++channel) {
 			float* channelData = new float[params.numSamples]();
@@ -234,7 +235,7 @@ namespace Akasha {
 			cache.channelBuffers[channel].Reset(isolate, arrayBuffer);
 			audioBuffer->Set(cache.context.Get(isolate), channel, floatArray).Check();
 		}
-		cache.arrayAudioBuffer.Reset(isolate, audioBuffer);
+		cache.channelBuffersView.Reset(isolate, audioBuffer);
 	}
 
 	bool JSEngine::compileAndRunScript(const std::string& scriptSource, v8::Local<v8::Context> context, juce::String& info) {
@@ -270,13 +271,15 @@ namespace Akasha {
 	void JSEngine::Cache::Reset(v8::Isolate* isolate) {
 		context.Reset();
 		globalObject.Reset();
-		arrayAudioBuffer.Reset();
+		channelBuffersView.Reset();
 		for (auto& channelBuffer : channelBuffers) {
 			channelBuffer.Reset();
 		}
 		mainWrapperFunction.Reset();
 		channelBuffers.clear();
 		arrayBufferArgs1.Reset();
+		arrayBufferArgs1View.Reset();
 		arrayBufferArgs2.Reset();
+		arrayBufferArgs2View.Reset();
 	}
 }
