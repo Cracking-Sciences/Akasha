@@ -31,7 +31,6 @@ namespace Akasha {
 
 		int note;
 		float velocity;
-		std::vector<std::vector<float*>> outputBuffer; // numChannels -> numSamples
 	};
 }
 
@@ -84,16 +83,20 @@ namespace Akasha {
 		~JSEngine();
 
 		bool loadFunction(const std::string& source_code, juce::String& info);
-		bool callFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId = 0);
+		bool callMainFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId = 0);
+		bool callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId = 0);
 		bool isFunctionReady() const;
 
 	private:
 		struct Cache {
 			v8::Global<v8::Context> context;
 			v8::Global<v8::Object> globalObject;
-			v8::Global<v8::Function> function;
+			// legacy
+			v8::Global<v8::Function> mainFunction;
 			v8::Global<v8::ArrayBuffer> arrayBufferArguments;
 			v8::Global<v8::Float64Array> float64ArrayArguments;
+			// new
+			v8::Global<v8::Function> mainWrapperFunction;
 			std::vector<v8::Global<v8::ArrayBuffer>> channelBuffers;
 			v8::Global<v8::Array> arrayAudioBuffer;
 			v8::Global<v8::ArrayBuffer> arrayBufferArgs1;

@@ -9,6 +9,19 @@ function createMainWrapper() {
             // args1: Array of macros
             // args2: Array of other parameters
             // buffer: A fixed 2D floating-point array representing the audio buffer for all channels
+            // if (!Array.isArray(buffer)) {
+            //     throw new Error(`Invalid buffer type: ${typeof buffer}. Expected a 2D array.`);
+            // }
+            // buffer.forEach((channel, index) => {
+            //     if (!Array.isArray(channel)) {
+            //         throw new Error(`Invalid buffer structure at channel ${index}: Expected an array, but got ${Object.prototype.toString.call(channel)}.`);
+            //     }
+            //     channel.forEach((sample, sampleIndex) => {
+            //         if (typeof sample !== "number") {
+            //             throw new Error(`Invalid buffer structure at channel ${index}, sample ${sampleIndex}: Expected a number, but got ${typeof sample} (${sample}).`);
+            //         }
+            //     });
+            // });
 
             var currentMacros = args1;
             var [
