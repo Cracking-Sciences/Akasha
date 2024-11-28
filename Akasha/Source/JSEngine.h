@@ -23,9 +23,9 @@ namespace Akasha {
 		std::array<std::atomic<float>*, 8> macros;
 		int numSamples;
 		int numChannels;
-		float sampleRate;
-		float tempo;
-		float beat;
+		double sampleRate;
+		double tempo;
+		double beat;
 		bool justPressed;
 		bool justReleased;
 
@@ -93,9 +93,9 @@ namespace Akasha {
 			v8::Global<v8::Function> mainWrapperFunction;
 
 			v8::Global<v8::ArrayBuffer> arrayBufferArgs1;
-			v8::Global<v8::Float32Array> arrayBufferArgs1View;
+			v8::Global<v8::Float64Array> arrayBufferArgs1View;
 			v8::Global<v8::ArrayBuffer> arrayBufferArgs2;
-			v8::Global<v8::Float32Array> arrayBufferArgs2View;
+			v8::Global<v8::Float64Array> arrayBufferArgs2View;
 			std::vector<v8::Global<v8::ArrayBuffer>> channelBuffers;
 			v8::Global<v8::Array> channelBuffersView;
 			Cache() = default;

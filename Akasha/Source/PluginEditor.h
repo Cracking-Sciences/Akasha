@@ -25,11 +25,12 @@ namespace Akasha {
 			slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
 			slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
 			slider.setRange(0.0, 1.0);
-			slider.setNumDecimalPlacesToDisplay(3);
+			// slider.setNumDecimalPlacesToDisplay(4);
 			addAndMakeVisible(slider);
 
 			label.setText(labelText, juce::dontSendNotification);
-			label.setJustificationType(juce::Justification::centred);
+			label.setJustificationType(juce::Justification::centredBottom);
+			label.setMinimumHorizontalScale(0.3f); 
 			label.setEditable(true);
 			addAndMakeVisible(label);
 		}
@@ -41,6 +42,7 @@ namespace Akasha {
 			juce::FlexBox flexBox;
 			flexBox.flexDirection = juce::FlexBox::Direction::column;
 			flexBox.items.add(juce::FlexItem(label).withFlex(1.0f));
+			flexBox.items.add(juce::FlexItem().withFlex(0.02f)); 
 			flexBox.items.add(juce::FlexItem(slider).withFlex(5.0f));
 			flexBox.performLayout(getLocalBounds());
 		}
@@ -68,6 +70,8 @@ namespace Akasha {
 
 			document.addListener(this);
 			setScrollbarThickness(8);
+
+			editAfterCompile = false;
 		}
 
 		void compile() {
@@ -124,6 +128,8 @@ namespace Akasha {
 			}
 		}
 
+		bool editAfterCompile = false;
+
 	private:
 		void codeDocumentTextInserted(const juce::String&, int) override {
 			editAfterCompile = true;
@@ -141,7 +147,6 @@ namespace Akasha {
 		juce::TextEditor* console = nullptr; // debug purpose.
 		Akasha::JSEngine& jsEngine;
 		bool hasFocus = false; // keyboard focus
-		bool editAfterCompile = false;
 	};
 }
 

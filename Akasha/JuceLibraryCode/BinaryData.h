@@ -9,7 +9,7 @@
 namespace BinaryData
 {
     extern const char*   mainWrapper_js;
-    const int            mainWrapper_jsSize = 2898;
+    const int            mainWrapper_jsSize = 3165;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
     const int namedResourceListSize = 1;

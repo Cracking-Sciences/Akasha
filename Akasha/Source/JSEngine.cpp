@@ -8,6 +8,7 @@ namespace Akasha {
 	}
 
 	V8GlobalManager::V8GlobalManager() {
+		v8::V8::SetFlagsFromString("--turbo-inlining --always-opt --no-lazy --turbo-fast-api-calls");
 		v8::V8::InitializeICUDefaultLocation(".");
 		v8::V8::InitializeExternalStartupData(".");
 		platform = v8::platform::NewDefaultPlatform();
@@ -66,7 +67,6 @@ namespace Akasha {
 			if (mainWrapperFunc.IsEmpty()) {
 				return false;
 			}
-			// remember main wrapper
 			cachedList[i].mainWrapperFunction.Reset(isolate, mainWrapperFunc);
 			cachedList[i].globalObject.Reset(isolate, context.Get(isolate)->Global());
 		}
@@ -112,12 +112,14 @@ namespace Akasha {
 		// fill outputBuffer
 		if (outputBuffer.getNumChannels() < args.numChannels || outputBuffer.getNumSamples() < startSample + numSamples) {
 			info = juce::String("Output buffer size is insufficient.\n");
+			function_ready = false;
 			return false;
 		}
 		for (int channel = 0; channel < args.numChannels; ++channel) {
 			auto& channelBuffer = cachedList[voiceId].channelBuffers[channel];
 			if (channelBuffer.IsEmpty()) {
 				info = juce::String("Channel buffer is empty.\n");
+				function_ready = false;
 				return false;
 			}
 			// Get the raw float array from the backing store
@@ -128,7 +130,6 @@ namespace Akasha {
 				outputChannelData[sample] += channelData[sample];
 			}
 		}
-
 		function_ready = true;
 		return true;
 	}
@@ -150,17 +151,10 @@ namespace Akasha {
 				needsReallocation = true;
 			}
 			else {
-				for (int i = 0; i < params.numChannels; ++i) {
-					v8::Local<v8::Value> bufferValue = audioBuffer->Get(cache.context.Get(isolate), i).ToLocalChecked();
-					if (!bufferValue->IsArrayBuffer()) {
-						needsReallocation = true;
-						break;
-					}
-					v8::Local<v8::ArrayBuffer> arrayBuffer = bufferValue.As<v8::ArrayBuffer>();
-					if (arrayBuffer->ByteLength() < params.numSamples * sizeof(float)) {
-						needsReallocation = true;
-						break;
-					}
+				v8::Local<v8::Value> bufferValue = audioBuffer->Get(cache.context.Get(isolate), 0).ToLocalChecked();
+				v8::Local<v8::ArrayBuffer> arrayBuffer = bufferValue.As<v8::ArrayBuffer>();
+				if (arrayBuffer->ByteLength() < params.numSamples * sizeof(float)) {
+					needsReallocation = true;
 				}
 			}
 		}
@@ -170,46 +164,46 @@ namespace Akasha {
 		// args1
 		if (cache.arrayBufferArgs1.IsEmpty()) {
 			auto backingStore = v8::ArrayBuffer::NewBackingStore(
-				new float[macro_len],
-				macro_len * sizeof(float),
+				new double[macro_len],
+				macro_len * sizeof(double),
 				[](void* data, size_t length, void* deleterData) {
-					delete[] static_cast<float*>(data);
+					delete[] static_cast<double*>(data);
 				},
 				nullptr
 			);
 			v8::Local<v8::ArrayBuffer> arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(backingStore));
 			cache.arrayBufferArgs1.Reset(isolate, arrayBuffer);
-			cache.arrayBufferArgs1View.Reset(isolate, v8::Float32Array::New(arrayBuffer, 0, macro_len));
+			cache.arrayBufferArgs1View.Reset(isolate, v8::Float64Array::New(arrayBuffer, 0, macro_len));
 		}
 		// args2
 		if (cache.arrayBufferArgs2.IsEmpty()) {
 			auto backingStore = v8::ArrayBuffer::NewBackingStore(
-				new float[infoArg_len],
-				infoArg_len * sizeof(float),
+				new double[infoArg_len],
+				infoArg_len * sizeof(double),
 				[](void* data, size_t length, void* deleterData) {
-					delete[] static_cast<float*>(data);
+					delete[] static_cast<double*>(data);
 				},
 				nullptr
 			);
 			v8::Local<v8::ArrayBuffer> arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(backingStore));
 			cache.arrayBufferArgs2.Reset(isolate, arrayBuffer);
-			cache.arrayBufferArgs2View.Reset(isolate, v8::Float32Array::New(arrayBuffer, 0, infoArg_len));
+			cache.arrayBufferArgs2View.Reset(isolate, v8::Float64Array::New(arrayBuffer, 0, infoArg_len));
 		}
 		// set data
-		float* bufferData1 = static_cast<float*>(cache.arrayBufferArgs1.Get(isolate)->GetBackingStore()->Data());
-		float* bufferData2 = static_cast<float*>(cache.arrayBufferArgs2.Get(isolate)->GetBackingStore()->Data());
+		double* bufferData1 = static_cast<double*>(cache.arrayBufferArgs1.Get(isolate)->GetBackingStore()->Data());
+		double* bufferData2 = static_cast<double*>(cache.arrayBufferArgs2.Get(isolate)->GetBackingStore()->Data());
 		for (size_t i = 0; i < params.macros.size(); ++i) {
-			bufferData1[i] = static_cast<float>(*params.macros[i]);
+			bufferData1[i] = static_cast<double>(*params.macros[i]);
 		}
-		bufferData2[0] = static_cast<float>(params.numSamples);
-		bufferData2[1] = static_cast<float>(params.numChannels);
-		bufferData2[2] = static_cast<float>(params.sampleRate);
-		bufferData2[3] = static_cast<float>(params.tempo);
-		bufferData2[4] = static_cast<float>(params.beat);
-		bufferData2[5] = static_cast<float>(params.justPressed ? 1.0 : 0.0);
-		bufferData2[6] = static_cast<float>(params.justReleased ? 1.0 : 0.0);
-		bufferData2[7] = static_cast<float>(params.note);
-		bufferData2[8] = static_cast<float>(params.velocity);
+		bufferData2[0] = static_cast<double>(params.numSamples);
+		bufferData2[1] = static_cast<double>(params.numChannels);
+		bufferData2[2] = static_cast<double>(params.sampleRate);
+		bufferData2[3] = static_cast<double>(params.tempo);
+		bufferData2[4] = static_cast<double>(params.beat);
+		bufferData2[5] = static_cast<double>(params.justPressed ? 1.0 : 0.0);
+		bufferData2[6] = static_cast<double>(params.justReleased ? 1.0 : 0.0);
+		bufferData2[7] = static_cast<double>(params.note);
+		bufferData2[8] = static_cast<double>(params.velocity);
 	}
 
 	void JSEngine::allocateChannelBuffers(const JSMainWrapperParams& params, Cache& cache) {
@@ -240,9 +234,9 @@ namespace Akasha {
 
 	bool JSEngine::compileAndRunScript(const std::string& scriptSource, v8::Local<v8::Context> context, juce::String& info) {
 		v8::TryCatch try_catch(isolate);
-		v8::Local<v8::String> source = v8::String::NewFromUtf8(isolate, scriptSource.c_str()).ToLocalChecked();
+		v8::ScriptCompiler::Source source(v8::String::NewFromUtf8(isolate, scriptSource.c_str()).ToLocalChecked());
 		v8::Local<v8::Script> script;
-		if (!v8::Script::Compile(context, source).ToLocal(&script)) {
+		if (!v8::ScriptCompiler::Compile(context, &source).ToLocal(&script)) {
 			v8::String::Utf8Value error(isolate, try_catch.Exception());
 			info = juce::String(*error);
 			return false;

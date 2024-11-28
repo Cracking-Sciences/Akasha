@@ -47,6 +47,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	// code editor.
 	formulaEditor.setConsole(&code_console);
 	addAndMakeVisible(formulaEditor);
+	formulaEditor.editAfterCompile = false;
 
 	// main editor.
 	int savedWidth = valueTreeState.getParameterAsValue("editorWidth").getValue();
@@ -100,7 +101,7 @@ void AkashaAudioProcessorEditor::resized() {
 	macroSlidersBox.flexWrap = juce::FlexBox::Wrap::wrap;
 	macroSlidersBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
 	for (auto* slider : macroSliders) {
-		macroSlidersBox.items.add(juce::FlexItem(*slider).withMinWidth(70.0f).withMinHeight(70.0f));
+		macroSlidersBox.items.add(juce::FlexItem(*slider).withMinWidth(80.0f).withMinHeight(60.0f));
 	}
 
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));

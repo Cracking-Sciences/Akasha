@@ -35,6 +35,7 @@ function createMainWrapper() {
 
             // Precompute constant factor
             const tempoFactor = tempo / 60.0 / sampleRate;
+            const delta = 1.0 / sampleRate;
 
             for (var i = 0; i < numSamples; i++) {
                 // Precompute interpolation factor
@@ -67,7 +68,7 @@ function createMainWrapper() {
                 }
 
                 // Update time and beat
-                time += 1.0 / sampleRate;
+                time += delta;
                 liveBeat += tempoFactor;
                 justPressed = false;
                 justReleased = false;

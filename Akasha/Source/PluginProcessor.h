@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "JSEngine.h"
+#include <juce_dsp/juce_dsp.h>
 
 extern const char* const defaultJavascriptCode;
 
@@ -22,11 +23,8 @@ namespace Akasha {
 			voiceId(voiceId)
 		{
 			recv_macros = macros;
-			// for macro smoothing
 			for (size_t i = 0; i < 8; i++) {
-				prev_macros[i] = *macros[i];
-				current_macros[i] = *macros[i];
-				mainWrapperParams.macros[i] = new std::atomic<float>(current_macros[i]);
+				mainWrapperParams.macros[i] = new std::atomic<float>(0);
 			}
 		}
 
@@ -65,14 +63,17 @@ namespace Akasha {
 			mainWrapperParams.numSamples = numSamples;
 			mainWrapperParams.numChannels = outputBuffer.getNumChannels();
 			mainWrapperParams.sampleRate = getSampleRate();
+
 			for (size_t macro_index = 0; macro_index < 8; macro_index++) {
 				mainWrapperParams.macros[macro_index]->store(*recv_macros[macro_index]);
 			}
+
 			juce::String info;
-			if (!jsEngine.callMainWrapperFunction(mainWrapperParams, outputBuffer, startSample, numSamples, info, voiceId)) {
+			if (!jsEngine.callMainWrapperFunction(mainWrapperParams, outputBuffer, startSample, mainWrapperParams.numSamples, info, voiceId)) {
 				giveInfo(info);
 				return;
 			}
+
 			mainWrapperParams.justPressed = false;
 			mainWrapperParams.justReleased = false;
 		}
@@ -107,8 +108,6 @@ namespace Akasha {
 		bool held = false;
 
 		std::array<std::atomic<float>*, 8> recv_macros;
-		std::array<float, 8> prev_macros;
-		std::array<float, 8> current_macros;
 	};
 
 	// Adding parameters
@@ -116,7 +115,17 @@ namespace Akasha {
 		juce::AudioProcessorValueTreeState::ParameterLayout layout;
 		// macros
 		for (int i = 0; i < 8; ++i) {
-			layout.add(std::make_unique<juce::AudioParameterFloat>("macro" + juce::String(i), "macro" + juce::String(i), 0.0f, 1.0f, 0.0f));
+			layout.add(std::make_unique<juce::AudioParameterFloat>
+				("macro" + juce::String(i),
+					"macro" + juce::String(i),
+					juce::Range<float>(0.f, 1.f), 
+					0.0f,
+					juce::String(), 
+					juce::AudioProcessorParameter::genericParameter,
+					[](float value, int) { return juce::String(value, 3); },
+					[](const juce::String& text) { return text.getFloatValue(); } 
+				)
+			);
 		}
 		// editorSize
 		layout.add(std::make_unique<juce::AudioParameterInt>(
