@@ -58,7 +58,6 @@ namespace Akasha {
 			if (mainFunc.IsEmpty()) {
 				return false;
 			}
-			cachedList[i].mainFunction.Reset(isolate, mainFunc);
 			// main wrapper
 			if (!compileAndRunScript(mainWrapperScript, context.Get(isolate), info)) {
 				return false;
@@ -70,79 +69,6 @@ namespace Akasha {
 			// remember main wrapper
 			cachedList[i].mainWrapperFunction.Reset(isolate, mainWrapperFunc);
 			cachedList[i].globalObject.Reset(isolate, context.Get(isolate)->Global());
-		}
-		function_ready = true;
-		return true;
-	}
-
-	bool JSEngine::callMainFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId) {
-		// legacy method
-		std::lock_guard<std::mutex> lock(mutex);
-		voiceId = voiceId % num_cached_contexts;
-		v8::Global<v8::Context>& cached_context = cachedList[voiceId].context;
-		v8::Global<v8::Object>& cached_global = cachedList[voiceId].globalObject;
-		v8::Global<v8::Function>& function = cachedList[voiceId].mainFunction;
-
-		if (cached_context.IsEmpty()) {
-			info = juce::String("Not compiled.\n");
-			function_ready = false;
-			return false;
-		}
-		v8::Isolate::Scope isolate_scope(isolate);
-		v8::HandleScope handle_scope(isolate);
-		auto cached_context_local = cached_context.Get(isolate);
-		auto cached_global_local = cached_global.Get(isolate);
-		auto cached_function_local = function.Get(isolate);
-
-		v8::Context::Scope context_scope(cached_context_local);
-		// return false; // debug
-		v8::TryCatch try_catch(isolate);
-
-		// Convert the C++ array to a JavaScript array
-		auto& js_args = prepareArguments(args, voiceId);
-
-		// Prepare arguments for the function (only one argument, the array)
-		v8::Local<v8::Value> js_func_args[1] = { js_args };
-		v8::Local<v8::Value> result;
-
-		if (!cached_function_local->Call(cached_context_local, cached_global_local, 1, js_func_args).ToLocal(&result)) {
-			v8::String::Utf8Value error(isolate, try_catch.Exception());
-			std::string error_str(*error);
-			info = juce::String(error_str) + "\n";
-			// std::cerr << "JavaScript Error: " << *error << std::endl;
-			try_catch.Reset();
-			function_ready = false;
-			return false;
-		}
-
-		if (result->IsArray()) {
-			v8::Local<v8::Array> result_array = result.As<v8::Array>();
-			uint32_t length = result_array->Length();
-			for (uint32_t i = 0; i < result_vector.size(); i++) {
-				if (i < length) {
-					v8::Local<v8::Value> element;
-					if (result_array->Get(cached_context_local, i).ToLocal(&element)) {
-						if (element->IsNumber()) {
-							result_vector[i] = element->NumberValue(cached_context_local).ToChecked();
-						}
-						else {
-							result_vector[i] = 0.0; // Default to 0.0 if not a number
-						}
-					}
-				}
-				else {
-					result_vector[i] = result_vector[0]; // Default to the first element if out of bounds
-				}
-			}
-		}
-		else if (result->IsNumber()) {
-			for (uint32_t i = 0; i < result_vector.size(); i++) {
-				result_vector[i] = (result->NumberValue(cached_context_local).ToChecked());
-			}
-		}
-		else {
-			info = juce::String("Result is not an array or a number.\n");
-			return false;
 		}
 		function_ready = true;
 		return true;
@@ -209,45 +135,6 @@ namespace Akasha {
 
 	bool JSEngine::isFunctionReady() const {
 		return function_ready;
-	}
-
-	v8::Local<v8::Float64Array> const JSEngine::prepareArguments(const JSFuncParams& params, int voiceId) {
-		// legacy method
-		if (cachedList[voiceId].arrayBufferArguments.IsEmpty() ||
-			cachedList[voiceId].float64ArrayArguments.IsEmpty()) {
-			auto backingStore = v8::ArrayBuffer::NewBackingStore(
-				new double[array_buffer_len],
-				array_buffer_len * sizeof(double),
-				[](void* data, size_t length, void* deleterData) {
-					delete[] static_cast<double*>(data);
-				},
-				nullptr
-			);
-			v8::Local<v8::ArrayBuffer> arrayBuffer = v8::ArrayBuffer::New(isolate, std::move(backingStore));
-			cachedList[voiceId].arrayBufferArguments.Reset(isolate, arrayBuffer);
-			v8::Local<v8::Float64Array> float64Array = v8::Float64Array::New(arrayBuffer, 0, array_buffer_len);
-			cachedList[voiceId].float64ArrayArguments.Reset(isolate, float64Array);
-		}
-
-		v8::Local<v8::ArrayBuffer> arrayBuffer = cachedList[voiceId].arrayBufferArguments.Get(isolate);
-		double* bufferData = static_cast<double*>(arrayBuffer->GetBackingStore()->Data());
-
-		for (size_t i = 0; i < params.macros.size(); ++i) {
-			bufferData[i] = static_cast<double>(*params.macros[i]);
-		}
-		bufferData[8] = params.tempo;
-		bufferData[9] = params.beat;
-		bufferData[10] = params.sampleRate;
-		bufferData[11] = params.bufferLen;
-		bufferData[12] = params.bufferPos;
-		bufferData[13] = params.time;
-		bufferData[14] = params.note;
-		bufferData[15] = params.velocity;
-		bufferData[16] = params.justPressed ? 1.0 : 0.0;
-		bufferData[17] = params.justReleased ? 1.0 : 0.0;
-
-		v8::Local<v8::Float64Array> float64Array = cachedList[voiceId].float64ArrayArguments.Get(isolate);
-		return float64Array;
 	}
 
 	void JSEngine::prepareMainWrapperArguments(const JSMainWrapperParams& params, int voiceId) {
@@ -383,9 +270,6 @@ namespace Akasha {
 	void JSEngine::Cache::Reset(v8::Isolate* isolate) {
 		context.Reset();
 		globalObject.Reset();
-		mainFunction.Reset();
-		arrayBufferArguments.Reset();
-		float64ArrayArguments.Reset();
 		arrayAudioBuffer.Reset();
 		for (auto& channelBuffer : channelBuffers) {
 			channelBuffer.Reset();

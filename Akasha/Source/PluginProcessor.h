@@ -26,14 +26,13 @@ namespace Akasha {
 			for (size_t i = 0; i < 8; i++) {
 				prev_macros[i] = *macros[i];
 				current_macros[i] = *macros[i];
-				mainParams.macros[i] = new std::atomic<float>(current_macros[i]);
 				mainWrapperParams.macros[i] = new std::atomic<float>(current_macros[i]);
 			}
 		}
 
 		~AkashaVoice() {
 			for (size_t i = 0; i < 8; i++) {
-				delete mainParams.macros[i];
+				delete mainWrapperParams.macros[i];
 			}
 		}
 
@@ -42,10 +41,6 @@ namespace Akasha {
 		}
 
 		void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound*, int /*currentPitchWheelPosition*/) override {
-			mainParams.note = midiNoteNumber;
-			mainParams.velocity = velocity;
-			mainParams.time = 0.0;
-			mainParams.justPressed = true;
 			mainWrapperParams.note = midiNoteNumber;
 			mainWrapperParams.velocity = velocity;
 			mainWrapperParams.justPressed = true;
@@ -53,8 +48,6 @@ namespace Akasha {
 		}
 
 		void stopNote(float velocity, bool allowTailOff) override {
-			mainParams.time = 0.0;
-			mainParams.justPressed = false;
 			mainWrapperParams.justPressed = false;
 			mainWrapperParams.justReleased = true;
 			mainWrapperParams.velocity = velocity;
@@ -80,8 +73,8 @@ namespace Akasha {
 				giveInfo(info);
 				return;
 			}
-			mainParams.justPressed = false;
-			mainParams.justReleased = false;
+			mainWrapperParams.justPressed = false;
+			mainWrapperParams.justReleased = false;
 		}
 
 		void pitchWheelMoved(int) override {};
@@ -90,9 +83,6 @@ namespace Akasha {
 
 		void setGlobalParams(double tempo, double beat, double sampleRate) {
 			// called by processor
-			mainParams.tempo = tempo;
-			mainParams.beat = beat;
-			mainParams.sampleRate = sampleRate;
 			mainWrapperParams.tempo = tempo;
 			mainWrapperParams.beat = beat;
 			mainWrapperParams.sampleRate = sampleRate;
@@ -110,7 +100,6 @@ namespace Akasha {
 		}
 
 	private:
-		JSFuncParams mainParams;
 		JSMainWrapperParams mainWrapperParams;
 		JSEngine& jsEngine;
 		juce::TextEditor* code_console = nullptr;
@@ -120,46 +109,6 @@ namespace Akasha {
 		std::array<std::atomic<float>*, 8> recv_macros;
 		std::array<float, 8> prev_macros;
 		std::array<float, 8> current_macros;
-
-		void renderNextBlockFromMain(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) {
-			if (!jsEngine.isFunctionReady()) {
-				return;
-			}
-			if (!held) {
-				return;
-			}
-			mainParams.sampleRate = getSampleRate();
-			mainParams.bufferLen = numSamples;
-			for (size_t macro_index = 0; macro_index < 8; macro_index++) {
-				current_macros[macro_index] = *recv_macros[macro_index];
-			}
-			std::vector<double> result_vector;
-			result_vector.resize(outputBuffer.getNumChannels());
-			juce::String info;
-			for (size_t i = 0; i < numSamples; i++) {
-				mainParams.bufferPos = i;
-				for (size_t macro_index = 0; macro_index < 8; macro_index++) {
-					mainParams.macros[macro_index]->store(
-						(float(i + 1) / numSamples) * current_macros[macro_index] +
-						(1.0f - float(i + 1) / numSamples) * prev_macros[macro_index]
-					);
-				}
-
-				if (!jsEngine.callMainFunction(mainParams, result_vector, info, voiceId)) {
-					giveInfo(info);
-					return;
-				}
-				for (size_t j = 0; j < outputBuffer.getNumChannels(); j++) {
-					outputBuffer.addSample(j, startSample + i, result_vector[j]);
-				}
-				mainParams.time += 1.0 / mainParams.sampleRate;
-				mainParams.justPressed = false;
-			}
-
-			for (size_t macro_index = 0; macro_index < 8; macro_index++) {
-				prev_macros[macro_index] = current_macros[macro_index];
-			}
-		}
 	};
 
 	// Adding parameters

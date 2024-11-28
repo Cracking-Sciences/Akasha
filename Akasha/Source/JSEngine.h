@@ -83,7 +83,6 @@ namespace Akasha {
 		~JSEngine();
 
 		bool loadFunction(const std::string& source_code, juce::String& info);
-		bool callMainFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId = 0);
 		bool callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId = 0);
 		bool isFunctionReady() const;
 
@@ -91,11 +90,6 @@ namespace Akasha {
 		struct Cache {
 			v8::Global<v8::Context> context;
 			v8::Global<v8::Object> globalObject;
-			// legacy
-			v8::Global<v8::Function> mainFunction;
-			v8::Global<v8::ArrayBuffer> arrayBufferArguments;
-			v8::Global<v8::Float64Array> float64ArrayArguments;
-			// new
 			v8::Global<v8::Function> mainWrapperFunction;
 			std::vector<v8::Global<v8::ArrayBuffer>> channelBuffers;
 			v8::Global<v8::Array> arrayAudioBuffer;
@@ -109,7 +103,6 @@ namespace Akasha {
 			void Reset(v8::Isolate* isolate);
 		};
 
-		v8::Local<v8::Float64Array> const prepareArguments(const JSFuncParams& params, int voiceId);
 		void prepareMainWrapperArguments(const JSMainWrapperParams& params, int voiceId);
 		void allocateArrayAudioBuffer(const JSMainWrapperParams& params, Cache& cache);
 		bool compileAndRunScript(const std::string& scriptSource, v8::Local<v8::Context> context, juce::String& info);
