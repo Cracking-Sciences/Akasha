@@ -125,10 +125,11 @@ namespace Akasha {
 			// Get the raw float array from the backing store
 			v8::Local<v8::ArrayBuffer> arrayBuffer = channelBuffer.Get(isolate);
 			float* channelData = static_cast<float*>(arrayBuffer->GetBackingStore()->Data());
-			auto* outputChannelData = outputBuffer.getWritePointer(channel, startSample);
-			for (int sample = 0; sample < numSamples; ++sample) {
-				outputChannelData[sample] += channelData[sample];
-			}
+			outputBuffer.addFrom(channel, startSample, channelData, numSamples, 1.0f);
+			// auto* outputChannelData = outputBuffer.getWritePointer(channel, startSample);
+			// for (int sample = 0; sample < numSamples; ++sample) {
+			// 	outputChannelData[sample] += channelData[sample];
+			// }
 		}
 		function_ready = true;
 		return true;

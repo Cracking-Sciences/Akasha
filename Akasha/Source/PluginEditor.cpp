@@ -55,7 +55,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 
 	setSize(savedWidth, savedHeight);
 	setResizable(true, true);
-	setResizeLimits(600, 400, std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+	setResizeLimits(800, 600, std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 
 	// processor
 	for (auto voice_ptr : audioProcessor.getVoices()) {
@@ -101,11 +101,11 @@ void AkashaAudioProcessorEditor::resized() {
 	macroSlidersBox.flexWrap = juce::FlexBox::Wrap::wrap;
 	macroSlidersBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
 	for (auto* slider : macroSliders) {
-		macroSlidersBox.items.add(juce::FlexItem(*slider).withMinWidth(80.0f).withMinHeight(60.0f));
+		macroSlidersBox.items.add(juce::FlexItem(*slider).withMinWidth(slider->getTextWidth()).withMinHeight(60.0f));
 	}
 
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));
-	mainFlexBox.items.add(juce::FlexItem(macroSlidersBox).withMinHeight(100.f));
+	mainFlexBox.items.add(juce::FlexItem(macroSlidersBox).withMinHeight(90.f));
 
 	mainFlexBox.performLayout(getLocalBounds().reduced(3.0f));
 

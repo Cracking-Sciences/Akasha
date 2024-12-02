@@ -19,7 +19,11 @@ namespace Akasha {
 			setDefaultSansSerifTypeface(getCustomFont());
 			setColour(juce::CodeEditorComponent::backgroundColourId, juce::Colour(0xFF252525));
 			setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xFF353535));
-			setColour(juce::TextEditor::outlineColourId, juce::Colour(0xFF707070));
+			setColour(juce::TextEditor::outlineColourId, outlineColour);
+			setColour(juce::Label::backgroundColourId, juce::Colour(0xFF303030));
+			setColour(juce::Label::outlineColourId, outlineColour);
+			setColour(juce::Label::backgroundWhenEditingColourId, juce::Colour(0xFF303030));
+			setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xFF303030));
 		}
 		static const juce::Typeface::Ptr getCustomFont() {
 			static auto typeface = juce::Typeface::createSystemTypefaceFor(din::DIN_ttf, din::DIN_ttfSize);
@@ -30,8 +34,7 @@ namespace Akasha {
 		}
 		void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
 			float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override {
-			// ÉèÖÃ¹ìµÀµÄ´ÖÏ¸
-			const float thickness = 0.15f; // ¿ØÖÆ¹ìµÀµÄ´ÖÏ¸ (0.0 µ½ 1.0)
+			const float thickness = 0.15f;
 			float radius = juce::jmin(width, height) / 2.0f - 4.0f;
 			float centerX = x + width * 0.5f;
 			float centerY = y + height * 0.5f;
@@ -39,19 +42,20 @@ namespace Akasha {
 			float ry = centerY - radius;
 			float rw = radius * 2.0f;
 
-			// ¹ìµÀµÄÆðÊ¼ºÍ½áÊø½Ç¶È
 			juce::Path track;
 			track.addCentredArc(centerX, centerY, radius, radius, 0.0f, rotaryStartAngle, rotaryEndAngle, true);
 
-			// »æÖÆ¹ìµÀ
-			g.setColour(juce::Colours::grey);
+			if (slider.isMouseOver()|| slider.isMouseButtonDown()) {
+				g.setColour(juce::Colours::lightgrey);
+			} else {
+				g.setColour(juce::Colours::grey);
+			}
 			g.strokePath(track, juce::PathStrokeType(radius * thickness, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-			// »æÖÆÐýÅ¥µÄÖ¸Õë
 			float angle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
 			juce::Path pointer;
-			float pointerLength = radius * 1.0f;       // ¿ØÖÆÐýÅ¥Ö¸Õë³¤¶È
-			float pointerThickness = 4.0f;             // ¿ØÖÆÐýÅ¥Ö¸ÕëµÄ´ÖÏ¸
+			float pointerLength = radius * 1.0f;
+			float pointerThickness = 4.0f;
 
 			pointer.addRoundedRectangle(-pointerThickness * 0.5f, -radius * 1.1f, pointerThickness, pointerLength, 3.0f);
 			g.setColour(juce::Colours::orange);
@@ -85,9 +89,63 @@ namespace Akasha {
 			g.fillEllipse(thumb);
 		}
 
+		void drawTextEditorOutline(juce::Graphics& g, int width, int height, juce::TextEditor& textEditor) override {
+			auto bounds = juce::Rectangle<int>(0, 0, width, height);
+			drawCoolBorder(g, bounds, outlineColour, 2, 7);
+		}
+
+		void fillTextEditorBackground(juce::Graphics& g, int width, int height, juce::TextEditor& textEditor) override {
+			auto bounds = juce::Rectangle<int>(0, 0, width, height);
+			drawCoolBackground(g, bounds,textEditor.findColour(juce::TextEditor::backgroundColourId), 7);
+		}
+
+		void drawLabel(juce::Graphics& g, juce::Label& label) override { 
+			if (label.isBeingEdited()) {
+				return;
+			}
+			drawCoolBackground(g, label.getLocalBounds(),label.findColour(juce::Label::backgroundColourId), 7);
+			g.setColour(label.findColour(juce::Label::textColourId));
+			g.setFont(label.getFont().withHeight(20.0f));
+			g.drawFittedText(label.getText(), label.getLocalBounds().reduced(4, 0), label.getJustificationType(), 1);
+			drawCoolBorder(g, label.getLocalBounds(), outlineColour, 2, 7);
+		}
+
 	private:
 		juce::Typeface::Ptr getTypefaceForFont(const juce::Font& f) override {
 			return getCustomFont();
 		}
+		void drawCoolBorder(juce::Graphics& g, const juce::Rectangle<int>& bounds, juce::Colour borderColour, float borderWidth, float cutDistance) {
+			int x1 = bounds.getRight();
+			int y1 = bounds.getBottom();
+
+			juce::Path borderPath;
+			borderPath.startNewSubPath(x1, bounds.getY());
+			borderPath.lineTo(x1, y1 - cutDistance);
+
+			borderPath.lineTo(x1 - cutDistance, y1);
+			borderPath.lineTo(bounds.getX(), y1);
+
+			g.setColour(borderColour);
+			g.strokePath(borderPath, juce::PathStrokeType((float)borderWidth));
+		}
+
+		void drawCoolBackground(juce::Graphics& g, const juce::Rectangle<int>& bounds, juce::Colour backgroundColour, int cutDistance) {
+			juce::Path clipPath;
+			int x1 = bounds.getRight();
+			int y1 = bounds.getBottom();
+
+			// 绘制右侧和下侧的边框路径
+			clipPath.startNewSubPath(bounds.getX(), bounds.getY());
+			clipPath.lineTo(x1 - cutDistance, bounds.getY());  // 右上角
+			clipPath.lineTo(x1, bounds.getY());               // 右侧上段
+			clipPath.lineTo(x1, y1 - cutDistance);            // 右侧下段
+			clipPath.lineTo(x1 - cutDistance, y1);            // 下侧右段
+			clipPath.lineTo(bounds.getX(), y1);               // 下侧左段
+			clipPath.closeSubPath();
+			g.setColour(backgroundColour);
+			g.fillPath(clipPath);
+		}
+
+		juce::Colour outlineColour = juce::Colour(0xFFA0A0A0);
 	};
 }

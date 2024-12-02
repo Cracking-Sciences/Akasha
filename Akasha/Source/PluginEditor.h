@@ -23,13 +23,13 @@ namespace Akasha {
 	public:
 		SliderWithLabel(const juce::String& labelText) {
 			slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-			slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+			slider.setTextBoxStyle(juce::Slider::TextBoxAbove, false, textWidth, 20);
 			slider.setRange(0.0, 1.0);
 			// slider.setNumDecimalPlacesToDisplay(4);
 			addAndMakeVisible(slider);
 
 			label.setText(labelText, juce::dontSendNotification);
-			label.setJustificationType(juce::Justification::centredBottom);
+			label.setJustificationType(juce::Justification::centred);
 			label.setMinimumHorizontalScale(0.3f); 
 			label.setEditable(true);
 			addAndMakeVisible(label);
@@ -41,8 +41,7 @@ namespace Akasha {
 		void resized() override {
 			juce::FlexBox flexBox;
 			flexBox.flexDirection = juce::FlexBox::Direction::column;
-			flexBox.items.add(juce::FlexItem(label).withFlex(1.0f));
-			flexBox.items.add(juce::FlexItem().withFlex(0.02f)); 
+			flexBox.items.add(juce::FlexItem(label).withMinHeight(10.0f).withFlex(1.0f));
 			flexBox.items.add(juce::FlexItem(slider).withFlex(5.0f));
 			flexBox.performLayout(getLocalBounds());
 		}
@@ -55,9 +54,14 @@ namespace Akasha {
 			label.setText(newText, juce::dontSendNotification);
 		}
 
+		float getTextWidth() {
+			return textWidth;
+		}
+
 	private:
 		juce::Slider slider;
 		juce::Label label;
+		float textWidth = 80.0f;
 	};
 
 	class FormulaEditor : public juce::CodeEditorComponent,
