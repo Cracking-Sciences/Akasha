@@ -43,7 +43,7 @@ namespace Akasha {
 		JSEngine() {}
 		~JSEngine() {}
 		bool loadFunction(const std::string& source_code, juce::String& info) { return true; }
-		bool callFunction(const JSFuncParams& args, std::vector<double>& result_vector, juce::String& info, int voiceId = 0) { return true; }
+		bool callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId = 0) { return true; }
 		bool isFunctionReady() const { return true; }
 	};
 }

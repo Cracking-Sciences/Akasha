@@ -82,11 +82,10 @@ namespace Akasha {
 
 		void controllerMoved(int, int) override {};
 
-		void setGlobalParams(double tempo, double beat, double sampleRate) {
+		void setGlobalParams(double tempo, double beat) {
 			// called by processor
 			mainWrapperParams.tempo = tempo;
 			mainWrapperParams.beat = beat;
-			mainWrapperParams.sampleRate = sampleRate;
 		}
 
 		void setConsole(juce::TextEditor* code_console) {
@@ -132,6 +131,8 @@ namespace Akasha {
 			"editorWidth", "Editor Width", 600, std::numeric_limits<int>::max(), 800));
 		layout.add(std::make_unique<juce::AudioParameterInt>(
 			"editorHeight", "Editor Height", 600, std::numeric_limits<int>::max(), 1000));
+		// Oversampling
+		layout.add(std::make_unique<juce::AudioParameterInt>("oversampling_factor", "oversampling_factor", 1, 16, 2));
 		return layout;
 	}
 }
@@ -190,4 +191,5 @@ private:
 	juce::AudioProcessorValueTreeState parameters;
 	std::array<std::atomic<float>*, 8> macros;
 
+	std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
 };

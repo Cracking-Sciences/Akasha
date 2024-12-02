@@ -90,8 +90,11 @@ void AkashaAudioProcessor::changeProgramName(int index, const juce::String& newN
 }
 
 void AkashaAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	synth.setCurrentPlaybackSampleRate(sampleRate);
-
+	uint8_t oversampling_factor = parameters.getRawParameterValue("oversampling_factor")->load();
+	synth.setCurrentPlaybackSampleRate(sampleRate * oversampling_factor);
+	constexpr auto filterType = juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR;
+	oversampler = std::make_unique<juce::dsp::Oversampling<float>>(2, oversampling_factor, filterType);
+	oversampler->initProcessing(samplesPerBlock);
 }
 
 void AkashaAudioProcessor::releaseResources() {
@@ -139,10 +142,17 @@ void AkashaAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 		}
 	}
 	for (auto voice_ptr : voices) {
-		voice_ptr->setGlobalParams(tempo, beat, getSampleRate());
+		voice_ptr->setGlobalParams(tempo, beat);
 	}
-	synth.setCurrentPlaybackSampleRate(getSampleRate());
-	synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+
+	uint8_t oversampling_factor = parameters.getRawParameterValue("oversampling_factor")->load();
+	juce::dsp::AudioBlock<float> block(buffer);
+	juce::dsp::AudioBlock<float> osBlock = oversampler->processSamplesUp(block);
+	float* p[] = {osBlock.getChannelPointer(0), osBlock.getChannelPointer(1)};
+	juce::AudioBuffer<float> osBuffer(p, 2, static_cast<int> (osBlock.getNumSamples()));
+	synth.setCurrentPlaybackSampleRate(getSampleRate()  * std::pow(2, oversampling_factor));
+	synth.renderNextBlock(osBuffer, midiMessages, 0, osBuffer.getNumSamples());
+	oversampler->processSamplesDown(block);
 }
 
 bool AkashaAudioProcessor::hasEditor() const {

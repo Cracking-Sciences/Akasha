@@ -1,5 +1,5 @@
 #include "JSEngine.h"
-
+#ifndef _DEBUG
 namespace Akasha {
 	// V8GlobalManager implementation
 	V8GlobalManager& V8GlobalManager::getInstance() {
@@ -278,3 +278,4 @@ namespace Akasha {
 		arrayBufferArgs2View.Reset();
 	}
 }
+#endif
