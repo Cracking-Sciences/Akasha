@@ -16,7 +16,6 @@ namespace Akasha {
 		int note;
 		float velocity;
 		bool justPressed;
-		bool justReleased;
 	};
 
 	struct JSMainWrapperParams {
@@ -27,8 +26,8 @@ namespace Akasha {
 		double tempo;
 		double beat;
 		bool justPressed;
-		bool justReleased;
 
+		int voiceId;
 		int note;
 		float velocity;
 	};
@@ -117,7 +116,7 @@ namespace Akasha {
 		std::vector<Cache> cachedList;
 
 		const int num_cached_contexts = 16;
-		const int infoArg_len = 10;
+		const int infoArg_len = 11;
 		const int macro_len = 8;
 		bool function_ready = false;
 		mutable std::mutex mutex;

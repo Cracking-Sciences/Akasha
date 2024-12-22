@@ -2,7 +2,6 @@ function createMainWrapper() {
     // Private variables to store previous Macros and time
     var prevMacros = null;
     var time = 0.0;
-    var timeAtReleased = 0.0;
     var liveBeat = 0.0;
     var interpolatedMacros = [];
     var sharedResultArray = []; // Shared result array for single-channel output
@@ -11,7 +10,7 @@ function createMainWrapper() {
         mainWrapper: function (args1, args2, buffer) {
             var currentMacros = args1;
             let [
-                numSamples, numChannels, sampleRate, tempo, beat, justPressed, justReleased, note, velocity
+                numSamples, numChannels, sampleRate, tempo, beat, justPressed, voiceId, note, velocity
             ] = args2;
 
             // Ensure interpolatedMacros matches the size of currentMacros
@@ -22,10 +21,6 @@ function createMainWrapper() {
 
             if (justPressed) {
                 time = 0.0;
-                timeAtReleased = 0.0;
-            }
-            if (justReleased) {
-                timeAtReleased = time;
             }
 
             liveBeat = beat;
@@ -44,12 +39,11 @@ function createMainWrapper() {
                 }
 
                 // Calculate time since release
-                const timeSinceReleased = time - timeAtReleased;
 
                 // Call main and handle the result
                 let result = main([
                     ...interpolatedMacros, tempo, liveBeat, sampleRate, numSamples,
-                    i, time, note, velocity, justPressed, justReleased, timeSinceReleased
+                    i, time, note, velocity, justPressed
                 ]);
 
                 // Normalize single number result to array
@@ -68,7 +62,6 @@ function createMainWrapper() {
                 time += delta;
                 liveBeat += tempoFactor;
                 justPressed = false;
-                justReleased = false;
             }
 
             // Update previous macros

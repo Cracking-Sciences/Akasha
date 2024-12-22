@@ -202,7 +202,7 @@ namespace Akasha {
 		bufferData2[3] = static_cast<double>(params.tempo);
 		bufferData2[4] = static_cast<double>(params.beat);
 		bufferData2[5] = static_cast<double>(params.justPressed ? 1.0 : 0.0);
-		bufferData2[6] = static_cast<double>(params.justReleased ? 1.0 : 0.0);
+		bufferData2[6] = static_cast<double>(params.voiceId);
 		bufferData2[7] = static_cast<double>(params.note);
 		bufferData2[8] = static_cast<double>(params.velocity);
 	}

@@ -47,7 +47,6 @@ namespace Akasha {
 
 		void stopNote(float velocity, bool allowTailOff) override {
 			mainWrapperParams.justPressed = false;
-			mainWrapperParams.justReleased = true;
 			mainWrapperParams.velocity = velocity;
 			held = false;
 			clearCurrentNote();
@@ -75,7 +74,6 @@ namespace Akasha {
 			}
 
 			mainWrapperParams.justPressed = false;
-			mainWrapperParams.justReleased = false;
 		}
 
 		void pitchWheelMoved(int) override {};
