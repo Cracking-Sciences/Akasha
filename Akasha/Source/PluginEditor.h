@@ -154,6 +154,20 @@ namespace Akasha {
 	};
 }
 
+class CodeConsole: public juce::TextEditor {
+public:
+	CodeConsole() {}
+
+	void paint(juce::Graphics& g) override {
+		juce::TextEditor::paint(g);
+
+		auto outlineColour = findColour(juce::TextEditor::outlineColourId);
+		g.setColour(outlineColour);
+		g.drawLine(0.0f, 0.0f, static_cast<float>(getWidth()), 0.0f, 2.0f);
+	}
+};
+
+
 class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor {
 public:
 	AkashaAudioProcessorEditor(AkashaAudioProcessor& p, juce::AudioProcessorValueTreeState& vts);
@@ -205,7 +219,7 @@ private:
 	std::unique_ptr<Akasha::FormulaEditor> formulaEditorPointer;
 	Akasha::FormulaEditor& formulaEditor;
 	// code console.
-	juce::TextEditor code_console;
+	CodeConsole code_console;
 	// custom look and feel.
 	Akasha::CustomLookAndFeel customLookAndFeel;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AkashaAudioProcessorEditor)
