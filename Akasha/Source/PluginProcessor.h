@@ -39,6 +39,7 @@ namespace Akasha {
 		}
 
 		void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound*, int /*currentPitchWheelPosition*/) override {
+			mainWrapperParams.voiceId = voiceId;
 			mainWrapperParams.note = midiNoteNumber;
 			mainWrapperParams.velocity = velocity;
 			mainWrapperParams.justPressed = true;

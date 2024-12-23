@@ -109,13 +109,14 @@ namespace Akasha {
 		void allocateChannelBuffers(const JSMainWrapperParams& params, Cache& cache);
 		bool compileAndRunScript(const std::string& scriptSource, v8::Local<v8::Context> context, juce::String& info);
 		v8::Local<v8::Function> getGlobalFunction(const std::string& functionName, v8::Local<v8::Context> context, juce::String& info);
+		v8::Local<v8::Function> getGlobalClass(const std::string& className, v8::Local<v8::Context> context, juce::String& info);
 
 		v8::Isolate::CreateParams create_params;
 		v8::Isolate* isolate;
 		std::unique_ptr<v8::Platform> platform;
-		std::vector<Cache> cachedList;
+		Cache cache;
 
-		const int num_cached_contexts = 16;
+		const int num_voices = 16;
 		const int infoArg_len = 11;
 		const int macro_len = 8;
 		bool function_ready = false;

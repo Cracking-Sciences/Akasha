@@ -226,37 +226,44 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
 
 
 const char* const defaultJavascriptCode = R"(// javascripts here
-function midiNoteToFreq(note){
+function midiNoteToFreq(note) {
     if (note < 0 || note > 127) {
         return 0;
     }
     const A4 = 440;
     const A4_note = 69;
-    return A4 * Math.pow(2, (note - A4_note)/12);
+    return A4 * Math.pow(2, (note - A4_note) / 12);
 }
 
-var dcBlockerLastInput = 0;
-var dcBlockerLastOutput = 0;
-function dcBlocker(input, alpha=0.995){
-    const output = input - dcBlockerLastInput + alpha * dcBlockerLastOutput;
-    dcBlockerLastInput = input;
-    dcBlockerLastOutput = output;
-    return output;
+class Voice {
+    constructor() {
+        this.phase = 0.0;
+        this.freq = 0.0;
+    }
+
+    main({
+        m0, m1, m2, m3, m4, m5, m6, m7,
+        tempo,
+        beat,
+        sampleRate,
+        numSamples,
+        bufferPos,
+        time,
+        note,
+        velocity,
+        justPressed
+    }) {
+        if (justPressed) {
+            this.freq = midiNoteToFreq(note);
+            this.phase = 0.0;
+        }
+
+        this.phase += this.freq / sampleRate * (1 + m1);
+        this.phase %= 1.0;
+
+        let output = Math.sin(this.phase * 2 * Math.PI);
+        return output * m0;
+    }
 }
 
-var phase = 0.0
-
-function main(args){
-    var [m0,m1,m2,m3,m4,m5,m6,m7, tempo, beat, sampleRate, bufferLen, bufferPos, 
-        time, note, velocity, justPressed, justReleased
-        ] = args;
-    // calc freq
-    var freq = midiNoteToFreq(note);
-    phase += freq / sampleRate;
-    phase %= 1.0;
-
-    var output = (phase % 1 - 0.5) * 0.5;
-    output = dcBlocker(output);
-    return output;
-}
 )";

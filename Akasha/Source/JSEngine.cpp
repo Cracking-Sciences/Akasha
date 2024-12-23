@@ -8,7 +8,7 @@ namespace Akasha {
 	}
 
 	V8GlobalManager::V8GlobalManager() {
-		v8::V8::SetFlagsFromString("--turbo-inlining --always-opt --no-lazy --turbo-fast-api-calls");
+		v8::V8::SetFlagsFromString("--turbo-inlining --no-lazy --turbo-fast-api-calls");
 		v8::V8::InitializeICUDefaultLocation(".");
 		v8::V8::InitializeExternalStartupData(".");
 		platform = v8::platform::NewDefaultPlatform();
@@ -29,13 +29,11 @@ namespace Akasha {
 		auto& globalManager = V8GlobalManager::getInstance();
 		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 		isolate = v8::Isolate::New(create_params);
-		cachedList.resize(num_cached_contexts);
 	}
 
 	JSEngine::~JSEngine() {
-		for (auto& cached : cachedList) {
-			cached.Reset(isolate);
-		}
+		cache.Reset(isolate);
+
 		if (isolate) {
 			isolate->Dispose();
 		}
@@ -47,39 +45,39 @@ namespace Akasha {
 		function_ready = false;
 		v8::Isolate::Scope isolate_scope(isolate);
 		v8::HandleScope handle_scope(isolate);
-		for (int i = 0; i < num_cached_contexts; i++) {
-			auto& context = cachedList[i].context;
-			context.Reset(isolate, v8::Context::New(isolate));
-			v8::Context::Scope context_scope(context.Get(isolate));
-			// user's code and main
-			if (!compileAndRunScript(source_code, context.Get(isolate), info)) {
-				return false;
-			}
-			v8::Local<v8::Function> mainFunc = getGlobalFunction("main", context.Get(isolate), info);
-			if (mainFunc.IsEmpty()) {
-				return false;
-			}
-			// main wrapper
-			if (!compileAndRunScript(mainWrapperScript, context.Get(isolate), info)) {
-				return false;
-			}
-			v8::Local<v8::Function> mainWrapperFunc = getGlobalFunction("mainWrapper", context.Get(isolate), info);
-			if (mainWrapperFunc.IsEmpty()) {
-				return false;
-			}
-			cachedList[i].mainWrapperFunction.Reset(isolate, mainWrapperFunc);
-			cachedList[i].globalObject.Reset(isolate, context.Get(isolate)->Global());
+
+		auto& context = cache.context;
+		context.Reset(isolate, v8::Context::New(isolate));
+		v8::Context::Scope context_scope(context.Get(isolate));
+		// user's code and main
+		if (!compileAndRunScript(source_code, context.Get(isolate), info)) {
+			return false;
 		}
+		v8::Local<v8::Function> VoiceClass = getGlobalClass("Voice", context.Get(isolate), info);
+		if (VoiceClass.IsEmpty()) {
+			return false;
+		}
+		// main wrapper
+		if (!compileAndRunScript(mainWrapperScript, context.Get(isolate), info)) {
+			return false;
+		}
+		v8::Local<v8::Function> mainWrapperFunc = getGlobalFunction("mainWrapper", context.Get(isolate), info);
+		if (mainWrapperFunc.IsEmpty()) {
+			return false;
+		}
+		cache.mainWrapperFunction.Reset(isolate, mainWrapperFunc);
+		cache.globalObject.Reset(isolate, context.Get(isolate)->Global());
+
 		function_ready = true;
 		return true;
 	}
 
 	bool JSEngine::callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId) {
 		std::lock_guard<std::mutex> lock(mutex);
-		voiceId = voiceId % num_cached_contexts;
-		v8::Global<v8::Context>& cached_context = cachedList[voiceId].context;
-		v8::Global<v8::Object>& cached_global = cachedList[voiceId].globalObject;
-		v8::Global<v8::Function>& function = cachedList[voiceId].mainWrapperFunction;
+		voiceId = voiceId % num_voices;
+		v8::Global<v8::Context>& cached_context = cache.context;
+		v8::Global<v8::Object>& cached_global = cache.globalObject;
+		v8::Global<v8::Function>& function = cache.mainWrapperFunction;
 		if (cached_context.IsEmpty()) {
 			info = juce::String("Not compiled.\n");
 			function_ready = false;
@@ -95,9 +93,9 @@ namespace Akasha {
 		v8::TryCatch try_catch(isolate);
 
 		prepareMainWrapperArguments(args, voiceId);
-		auto js_args1 = cachedList[voiceId].arrayBufferArgs1View.Get(isolate);
-		auto js_args2 = cachedList[voiceId].arrayBufferArgs2View.Get(isolate);
-		auto js_args_buffer = cachedList[voiceId].channelBuffersView.Get(isolate);
+		auto js_args1 = cache.arrayBufferArgs1View.Get(isolate);
+		auto js_args2 = cache.arrayBufferArgs2View.Get(isolate);
+		auto js_args_buffer = cache.channelBuffersView.Get(isolate);
 		v8::Local<v8::Value> js_func_args[3] = { js_args1, js_args2, js_args_buffer };
 		v8::Local<v8::Value> result;
 		if (!cached_function_local->Call(cached_context_local, cached_global_local, 3, js_func_args).ToLocal(&result)) {
@@ -116,7 +114,7 @@ namespace Akasha {
 			return false;
 		}
 		for (int channel = 0; channel < args.numChannels; ++channel) {
-			auto& channelBuffer = cachedList[voiceId].channelBuffers[channel];
+			auto& channelBuffer = cache.channelBuffers[channel];
 			if (channelBuffer.IsEmpty()) {
 				info = juce::String("Channel buffer is empty.\n");
 				function_ready = false;
@@ -140,7 +138,6 @@ namespace Akasha {
 	}
 
 	void JSEngine::prepareMainWrapperArguments(const JSMainWrapperParams& params, int voiceId) {
-		auto& cache = cachedList[voiceId];
 		// buffer
 		bool needsReallocation = false;
 		if (cache.channelBuffersView.IsEmpty()) {
@@ -261,6 +258,23 @@ namespace Akasha {
 			return v8::Local<v8::Function>();
 		}
 		return func_value.As<v8::Function>();
+	}
+
+
+	v8::Local<v8::Function> JSEngine::getGlobalClass(const std::string& className, v8::Local<v8::Context> context, juce::String& info) {
+		v8::Local<v8::Value> class_value;
+
+		if (!context->Global()->Get(context, v8::String::NewFromUtf8(isolate, className.c_str()).ToLocalChecked()).ToLocal(&class_value)) {
+			info = juce::String("Class '" + className + "' not found.\n");
+			return v8::Local<v8::Function>();
+		}
+
+		// if (!class_value->IsFunction()) {
+		// 	info = juce::String("'" + className + "' is not a valid class (not a function).\n");
+		// 	return v8::Local<v8::Function>();
+		// }
+
+		return class_value.As<v8::Function>();
 	}
 
 	void JSEngine::Cache::Reset(v8::Isolate* isolate) {
