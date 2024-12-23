@@ -59,7 +59,7 @@ namespace Akasha {
 #include "v8-primitive.h"
 #include "v8-script.h"
 #include <mutex>
-#include "assets/mainWrapper.h"
+#include "mainWrapper.h"
 
 namespace Akasha {
 

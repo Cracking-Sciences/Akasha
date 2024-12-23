@@ -5,6 +5,18 @@
               companyName="Cracking Sciences">
   <MAINGROUP id="LKIRRr" name="Akasha">
     <GROUP id="{3A77558B-6FCD-E060-4D31-37E331F68564}" name="Source">
+      <GROUP id="{C4B5F302-6855-4653-A89B-F7A012701DF5}" name="kernel">
+        <GROUP id="{FB24901B-C297-4F95-27CA-9E4D2ACA76C9}" name="engine">
+          <FILE id="sli3yI" name="defaultJSCode.h" compile="0" resource="0" file="Source/kernel/engine/defaultJSCode.h"/>
+          <FILE id="GErENw" name="JSEngine.cpp" compile="1" resource="0" file="Source/kernel/engine/JSEngine.cpp"/>
+          <FILE id="YMqC2B" name="JSEngine.h" compile="0" resource="0" file="Source/kernel/engine/JSEngine.h"/>
+          <FILE id="iHGSkK" name="mainWrapper.h" compile="0" resource="0" file="Source/kernel/engine/mainWrapper.h"/>
+          <FILE id="fI2ufS" name="mainWrapper.js" compile="0" resource="1" file="Source/kernel/engine/mainWrapper.js"/>
+        </GROUP>
+        <GROUP id="{D2DEEA01-432D-E2DA-2A77-D910C5BFBFB4}" name="voice">
+          <FILE id="LcyjQ8" name="voice.h" compile="0" resource="0" file="Source/kernel/voice/voice.h"/>
+        </GROUP>
+      </GROUP>
       <GROUP id="{18669A7D-4477-5232-8EC9-B1B816DC8299}" name="ui">
         <GROUP id="{C5231F03-B6FE-58DD-F8E1-4976C2C035DA}" name="slider">
           <FILE id="hp093G" name="slider.h" compile="0" resource="0" file="Source/ui/slider/slider.h"/>
@@ -15,25 +27,24 @@
         <GROUP id="{657BF4FA-F23B-1A90-CE78-A0786C520E0B}" name="console">
           <FILE id="gGpVX7" name="console.h" compile="0" resource="0" file="Source/ui/console/console.h"/>
         </GROUP>
-        <GROUP id="{7A2E530C-1B08-0467-9BA1-2FF3C4EF9EAD}" name="code_editor"/>
+        <GROUP id="{7A2E530C-1B08-0467-9BA1-2FF3C4EF9EAD}" name="code_editor">
+          <GROUP id="{A4549320-0C3F-1EE9-4E5E-61E5D61F333F}" name="JsTokeniser">
+            <FILE id="vAZmQx" name="JavascriptCodeTokeniser.cpp" compile="1" resource="0"
+                  file="Source/ui/code_editor/JsTokeniser/JavascriptCodeTokeniser.cpp"/>
+            <FILE id="jls4WM" name="JavascriptCodeTokeniser.h" compile="0" resource="0"
+                  file="Source/ui/code_editor/JsTokeniser/JavascriptCodeTokeniser.h"/>
+          </GROUP>
+          <FILE id="yAUKSb" name="builtinCodeEditor.h" compile="0" resource="0"
+                file="Source/ui/code_editor/builtinCodeEditor.h"/>
+        </GROUP>
         <FILE id="GbK7hz" name="MyLookAndFeel.h" compile="0" resource="0" file="Source/ui/MyLookAndFeel.h"/>
       </GROUP>
       <GROUP id="{A338E764-04E7-6973-3AB0-22A9C378D2F2}" name="assets">
-        <FILE id="EL8F99" name="mainWrapper.h" compile="0" resource="0" file="Source/assets/mainWrapper.h"/>
-        <FILE id="KbrXiJ" name="mainWrapper.js" compile="0" resource="1" file="Source/assets/mainWrapper.js"/>
-        <GROUP id="{CAAAE4B0-25ED-AD0A-9926-74DEFC6578A0}" name="JsTokeniser">
-          <FILE id="h1u55P" name="JavascriptCodeTokeniser.cpp" compile="1" resource="0"
-                file="Source/assets/JsTokeniser/JavascriptCodeTokeniser.cpp"/>
-          <FILE id="jS95cC" name="JavascriptCodeTokeniser.h" compile="0" resource="0"
-                file="Source/assets/JsTokeniser/JavascriptCodeTokeniser.h"/>
-        </GROUP>
         <GROUP id="{7F17110C-7ECA-BF26-8316-368C0E3AC6AE}" name="fonts">
           <FILE id="biJqLT" name="din.h" compile="0" resource="0" file="Source/assets/fonts/din.h"/>
           <FILE id="PLMTlr" name="din.cpp" compile="1" resource="0" file="Source/assets/fonts/din.cpp"/>
         </GROUP>
       </GROUP>
-      <FILE id="fMFupV" name="JSEngine.h" compile="0" resource="0" file="Source/JSEngine.h"/>
-      <FILE id="v4FfV7" name="JSEngine.cpp" compile="1" resource="0" file="Source/JSEngine.cpp"/>
       <FILE id="JpR7IF" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="hdgULS" name="PluginProcessor.h" compile="0" resource="0"

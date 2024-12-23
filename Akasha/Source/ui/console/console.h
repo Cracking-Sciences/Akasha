@@ -5,7 +5,13 @@
 namespace Akasha{
 	class CodeConsole: public juce::TextEditor {
 	public:
-		CodeConsole() {}
+		CodeConsole() {
+			setMultiLine(true);
+			setReadOnly(true);
+			setReturnKeyStartsNewLine(true);
+			setScrollbarsShown(true);
+			setFont(juce::Font(juce::Font::getDefaultMonospacedFontName(), 15.0f, juce::Font::plain));
+		}
 	
 		void paint(juce::Graphics& g) override {
 			juce::TextEditor::paint(g);
