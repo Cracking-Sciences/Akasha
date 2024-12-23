@@ -131,7 +131,7 @@ namespace Akasha {
 		layout.add(std::make_unique<juce::AudioParameterInt>(
 			"editorHeight", "Editor Height", 600, std::numeric_limits<int>::max(), 1000));
 		// Oversampling
-		layout.add(std::make_unique<juce::AudioParameterInt>("oversampling_factor", "oversampling_factor", 1, 16, 2));
+		layout.add(std::make_unique<juce::AudioParameterInt>("oversampling_factor", "oversampling_factor", 0, 3, 2));
 		return layout;
 	}
 }

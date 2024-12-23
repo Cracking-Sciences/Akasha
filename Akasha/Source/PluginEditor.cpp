@@ -19,22 +19,12 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	codeDocument(),
 	codeTokeniser(),
 	formulaEditorPointer(std::make_unique<Akasha::FormulaEditor>(codeDocument, &codeTokeniser, audioProcessor.getJSEngine())),
-	formulaEditor(*formulaEditorPointer) {
+	formulaEditor(*formulaEditorPointer),
+	macroSliderGroupPointer(std::make_unique<Akasha::Macros>(vts)){
 	setLookAndFeel(&customLookAndFeel);
 
-	// several sliders.
-	for (int i = 0; i < 8; ++i) {
-		auto* sliderWithLabel = new Akasha::SliderWithLabel("m" + juce::String(i));
-		addAndMakeVisible(sliderWithLabel);
-		macroSliders.add(sliderWithLabel);
-
-		auto* attachment = new SliderAttachment(
-				valueTreeState,
-				"macro" + juce::String(i),
-				sliderWithLabel->getSlider()
-			);
-		macroSliderAttachments.add(attachment);
-	}
+	// macros
+	addAndMakeVisible(macroSliderGroupPointer.get());
 
 	// console.
 	code_console.setMultiLine(true);
@@ -85,7 +75,6 @@ void AkashaAudioProcessorEditor::mouseDown(const juce::MouseEvent& event) {
 }
 void AkashaAudioProcessorEditor::resized() {
 	juce::FlexBox mainFlexBox;
-	juce::FlexBox macroSlidersBox;
 	juce::FlexBox textEditorBox;
 
 	mainFlexBox.flexDirection = juce::FlexBox::Direction::column;
@@ -97,15 +86,8 @@ void AkashaAudioProcessorEditor::resized() {
 	textEditorBox.items.add(juce::FlexItem(code_console).withMinHeight(40.0f)
 		.withMargin(juce::FlexItem::Margin(0.0f)));
 
-	macroSlidersBox.flexDirection = juce::FlexBox::Direction::row;
-	macroSlidersBox.flexWrap = juce::FlexBox::Wrap::wrap;
-	macroSlidersBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-	for (auto* slider : macroSliders) {
-		macroSlidersBox.items.add(juce::FlexItem(*slider).withMinWidth(slider->getTextWidth()).withMinHeight(60.0f));
-	}
-
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));
-	mainFlexBox.items.add(juce::FlexItem(macroSlidersBox).withMinHeight(90.f));
+	mainFlexBox.items.add(juce::FlexItem(*macroSliderGroupPointer).withMinHeight(90.f));
 
 	mainFlexBox.performLayout(getLocalBounds().reduced(3.0f));
 

@@ -5,6 +5,19 @@
               companyName="Cracking Sciences">
   <MAINGROUP id="LKIRRr" name="Akasha">
     <GROUP id="{3A77558B-6FCD-E060-4D31-37E331F68564}" name="Source">
+      <GROUP id="{18669A7D-4477-5232-8EC9-B1B816DC8299}" name="ui">
+        <GROUP id="{C5231F03-B6FE-58DD-F8E1-4976C2C035DA}" name="slider">
+          <FILE id="hp093G" name="slider.h" compile="0" resource="0" file="Source/ui/slider/slider.h"/>
+        </GROUP>
+        <GROUP id="{35D8D13C-8979-B8A3-42A5-F31DAF0C25BC}" name="macros">
+          <FILE id="dYCg8r" name="macros.h" compile="0" resource="0" file="Source/ui/macros/macros.h"/>
+        </GROUP>
+        <GROUP id="{657BF4FA-F23B-1A90-CE78-A0786C520E0B}" name="console">
+          <FILE id="gGpVX7" name="console.h" compile="0" resource="0" file="Source/ui/console/console.h"/>
+        </GROUP>
+        <GROUP id="{7A2E530C-1B08-0467-9BA1-2FF3C4EF9EAD}" name="code_editor"/>
+        <FILE id="GbK7hz" name="MyLookAndFeel.h" compile="0" resource="0" file="Source/ui/MyLookAndFeel.h"/>
+      </GROUP>
       <GROUP id="{A338E764-04E7-6973-3AB0-22A9C378D2F2}" name="assets">
         <FILE id="EL8F99" name="mainWrapper.h" compile="0" resource="0" file="Source/assets/mainWrapper.h"/>
         <FILE id="KbrXiJ" name="mainWrapper.js" compile="0" resource="1" file="Source/assets/mainWrapper.js"/>
@@ -19,7 +32,6 @@
           <FILE id="PLMTlr" name="din.cpp" compile="1" resource="0" file="Source/assets/fonts/din.cpp"/>
         </GROUP>
       </GROUP>
-      <FILE id="GCidcQ" name="MyLookAndFeel.h" compile="0" resource="0" file="Source/MyLookAndFeel.h"/>
       <FILE id="fMFupV" name="JSEngine.h" compile="0" resource="0" file="Source/JSEngine.h"/>
       <FILE id="v4FfV7" name="JSEngine.cpp" compile="1" resource="0" file="Source/JSEngine.cpp"/>
       <FILE id="JpR7IF" name="PluginProcessor.cpp" compile="1" resource="0"
