@@ -6,11 +6,33 @@
 #include "../../utilities/pack.h"
 
 namespace Akasha {
-    class webCodeEditor : public juce::Component {
+    class webCodeEditor : public juce::WebBrowserComponent {
     public:
-		webCodeEditor(Akasha::JSEngine& engine) :
-			jsEngine(engine) {
-			addAndMakeVisible(webBrowser);
+        webCodeEditor(Akasha::JSEngine& engine)
+            : juce::WebBrowserComponent(
+                juce::WebBrowserComponent::Options{}
+                .withBackend(juce::WebBrowserComponent::Options::Backend::webview2)
+                .withWinWebView2Options(
+                    juce::WebBrowserComponent::Options::WinWebView2{}
+                    .withUserDataFolder(juce::File::getSpecialLocation(juce::File::SpecialLocationType::tempDirectory)))
+                .withNativeIntegrationEnabled()
+                .withNativeFunction("edited", [this](auto& args, auto complete) {
+                    codeDocumentTextChanged();
+                    complete("Editor state updated successfully.");
+                    })
+                .withNativeFunction("focusGained", [this](auto& args, auto complete) {
+                    focusGained();
+                    complete("Focus gained handled.");
+                    })
+                .withNativeFunction("focusLost", [this](auto& args, auto complete) {
+                    focusLost();
+                    complete("Focus lost handled.");
+                    })
+            ),
+            jsEngine(engine) {
+
+            setWantsKeyboardFocus(true);
+
             // Define the temporary directory
             auto baseDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory);
             auto crackingSciencesDir = baseDir.getChildFile("CrackingSciences");
@@ -31,16 +53,16 @@ namespace Akasha {
             htmlFile = tempDir.getChildFile("index.html");
             if (htmlFile.existsAsFile())
             {
-                webBrowser.goToURL("file:///" + htmlFile.getFullPathName());
+                goToURL("file:///" + htmlFile.getFullPathName());
             }
             else
             {
                 // Fallback to a URL if the HTML file is missing
-                webBrowser.goToURL("https://example.com");
+                goToURL("https://example.com");
             }
 		}
 		~webCodeEditor() {
-			webBrowser.stop();
+			stop();
 		}
 
         void compile() {
@@ -67,7 +89,7 @@ R"(
     })();
  )";
             juce::String result;
-            webBrowser.evaluateJavascript(jsCode, [&](juce::WebBrowserComponent::EvaluationResult evaluationResult){
+            evaluateJavascript(jsCode, [&](juce::WebBrowserComponent::EvaluationResult evaluationResult){
 				if (evaluationResult.getResult()==nullptr) {
                     giveInfo("Failed to get code.");
 					return;
@@ -93,7 +115,7 @@ R"(
         ;
     })();
 )";
-            webBrowser.evaluateJavascript(jsCode, [&](juce::WebBrowserComponent::EvaluationResult evaluationResult) {
+            evaluateJavascript(jsCode, [&](juce::WebBrowserComponent::EvaluationResult evaluationResult) {
                 if (evaluationResult.getResult()==nullptr) {
                     giveInfo("Failed to set code");
                     return;
@@ -101,12 +123,14 @@ R"(
                 });
         }
 
-		void onWebBrowserFocusGained() {
+        void focusGained()  {
+			giveInfo("Focus gained.");
 			hasFocus = true;
 			repaint();
 		}
 
-		void onWebBrowserFocusLost() {
+		void focusLost() {
+			giveInfo("Focus lost.");
 			hasFocus = false;
 			repaint();
             if (editAfterCompile) {
@@ -115,18 +139,13 @@ R"(
 		}
 
 		void paint(juce::Graphics& g) override {
-            webBrowser.paint(g);
-			juce::Component::paint(g);
+            juce::WebBrowserComponent::paint(g);
             if (!hasFocus) {
                 juce::Colour overlayColour = juce::Colours::grey.withAlpha(0.2f);
                 auto bounds = getLocalBounds();
                 g.setColour(overlayColour);
                 g.fillRect(bounds);
             }
-		}
-
-		void resized() override {
-			webBrowser.setBounds(getLocalBounds());
 		}
 
         bool editAfterCompile = false;
@@ -142,17 +161,6 @@ R"(
             }
         }
 
-        juce::WebBrowserComponent webBrowser{ 
-            juce::WebBrowserComponent::Options{}
-            .withBackend(juce::WebBrowserComponent::Options::Backend::webview2)
-            .withWinWebView2Options(juce::WebBrowserComponent::Options::WinWebView2{}
-                .withUserDataFolder(juce::File::getSpecialLocation (juce::File::SpecialLocationType::tempDirectory)))
-            .withNativeIntegrationEnabled()
-            .withNativeFunction("edited", [this](auto& args, auto complete) {
-                codeDocumentTextChanged();
-                complete("Editor state updated successfully."); 
-            })
-        };
         CodeConsole* console = nullptr; 
         Akasha::JSEngine& jsEngine;
         bool hasFocus = false;

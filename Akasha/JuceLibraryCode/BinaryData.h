@@ -15,7 +15,7 @@ namespace BinaryData
     const int            mainWrapper_jsSize = 3876;
 
     extern const char*   WebEditorPacked_pack;
-    const int            WebEditorPacked_packSize = 3012613;
+    const int            WebEditorPacked_packSize = 3013279;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
     const int namedResourceListSize = 3;
