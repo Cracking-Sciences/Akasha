@@ -1,4 +1,5 @@
 V8/library/*
 Builds/*
 Source/ui/code_editor/WebEditor/*
+Source/assets/*
 JuceLibraryCode/*

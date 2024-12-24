@@ -7,7 +7,7 @@
     <GROUP id="{3A77558B-6FCD-E060-4D31-37E331F68564}" name="Source">
       <GROUP id="{9ADB20FE-6968-6F45-384B-6FB01FA66986}" name="utilities">
         <FILE id="JwbF7O" name="pack.h" compile="0" resource="0" file="Source/utilities/pack.h"/>
-        <FILE id="tAZgcw" name="pack_directory.py" compile="0" resource="1"
+        <FILE id="tAZgcw" name="pack_directory.py" compile="0" resource="0"
               file="Source/utilities/pack_directory.py"/>
       </GROUP>
       <GROUP id="{C4B5F302-6855-4653-A89B-F7A012701DF5}" name="kernel">
@@ -42,8 +42,6 @@
           <FILE id="yAUKSb" name="builtinCodeEditor.h" compile="0" resource="0"
                 file="Source/ui/code_editor/builtinCodeEditor.h"/>
           <FILE id="sFrT6A" name="webCodeEditor.h" compile="0" resource="0" file="Source/ui/code_editor/webCodeEditor.h"/>
-          <FILE id="gV9Kdd" name="WebEditorPacked.pack" compile="0" resource="1"
-                file="Source/ui/code_editor/WebEditorPacked.pack"/>
         </GROUP>
         <FILE id="GbK7hz" name="MyLookAndFeel.h" compile="0" resource="0" file="Source/ui/MyLookAndFeel.h"/>
       </GROUP>
@@ -52,6 +50,8 @@
           <FILE id="biJqLT" name="din.h" compile="0" resource="0" file="Source/assets/fonts/din.h"/>
           <FILE id="PLMTlr" name="din.cpp" compile="1" resource="0" file="Source/assets/fonts/din.cpp"/>
         </GROUP>
+        <FILE id="FQRw6p" name="WebEditorPacked.pack" compile="0" resource="1"
+              file="Source/assets/WebEditorPacked.pack"/>
       </GROUP>
       <FILE id="JpR7IF" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
