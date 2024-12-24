@@ -16,6 +16,7 @@
 #include "ui/console/console.h"
 #include "ui/macros/macros.h"
 #include "ui/code_editor/builtinCodeEditor.h"
+#include "ui/code_editor/webCodeEditor.h"
 
 class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor {
 public:
@@ -58,9 +59,10 @@ private:
 	juce::AudioProcessorValueTreeState& valueTreeState;
 
 	// code editor.
-	juce::CodeDocument codeDocument;
-	JavascriptTokeniser codeTokeniser;
-	std::unique_ptr<Akasha::builtinFormulaEditor> formulaEditorPointer;
+	// juce::CodeDocument codeDocument;
+	// JavascriptTokeniser codeTokeniser;
+	// std::unique_ptr<Akasha::builtinFormulaEditor> formulaEditorPointer;
+	std::unique_ptr<Akasha::webCodeEditor> formulaEditorPointer;
 	// code console.
 	std::unique_ptr<Akasha::CodeConsole> codeConsolePointer;
 	// macro sliders.

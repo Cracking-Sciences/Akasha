@@ -13,9 +13,10 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	AudioProcessorEditor(&p),
 	valueTreeState (vts),
 	audioProcessor(p),
-	codeDocument(),
-	codeTokeniser(),
-	formulaEditorPointer(std::make_unique<Akasha::builtinFormulaEditor>(codeDocument, &codeTokeniser, audioProcessor.getJSEngine())),
+	// codeDocument(),
+	// codeTokeniser(),
+	// formulaEditorPointer(std::make_unique<Akasha::builtinFormulaEditor>(codeDocument, &codeTokeniser, audioProcessor.getJSEngine())),
+	formulaEditorPointer(std::make_unique<Akasha::webCodeEditor>(audioProcessor.getJSEngine())),
 	macroSliderGroupPointer(std::make_unique<Akasha::Macros>(vts)),
 	codeConsolePointer(std::make_unique<Akasha::CodeConsole>())
 {

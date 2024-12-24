@@ -78,9 +78,11 @@
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
-  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"
+               JUCE_USE_WIN_WEBVIEW2_WITH_STATIC_LINKING="1" JUCE_USE_WIN_WEBVIEW2="1"/>
   <EXPORTFORMATS>
-    <VS2022 targetFolder="Builds/VisualStudio2022" extraCompilerFlags="/std:c++20&#10;/Zc:__cplusplus">
+    <VS2022 targetFolder="Builds/VisualStudio2022" extraCompilerFlags="/std:c++20&#10;/Zc:__cplusplus"
+            extraDefs="JUCE_USE_WIN_WEBVIEW2_WITH_STATIC_LINKING=1" externalLibraries="WebView2LoaderStatic.lib">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Akasha" winWarningLevel="3"
                        useRuntimeLibDLL="0" defines="_ITERATOR_DEBUG_LEVEL=2"/>

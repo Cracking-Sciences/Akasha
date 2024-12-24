@@ -1,0 +1,1 @@
+python pack_directory.py ../ui/code_editor/WebEditor ../ui/code_editor/WebEditorPacked.pack
