@@ -8,11 +8,17 @@
 
 namespace BinaryData
 {
+    extern const char*   pack_directory_py;
+    const int            pack_directory_pySize = 1602;
+
     extern const char*   mainWrapper_js;
     const int            mainWrapper_jsSize = 3876;
 
+    extern const char*   WebEditorPacked_pack;
+    const int            WebEditorPacked_packSize = 2989468;
+
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 1;
+    const int namedResourceListSize = 3;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];
