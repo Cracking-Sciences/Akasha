@@ -4,72 +4,43 @@
 #include <JuceHeader.h>
 
 namespace Akasha {
+	class DraggableNumberBox;
+
+	class DraggableNumberBoxParameterListener : public juce::AudioProcessorValueTreeState::Listener {
+	public:
+		DraggableNumberBoxParameterListener(DraggableNumberBox& owner) : owner(owner) {}
+		void parameterChanged(const juce::String& parameterID, float newValue) override;
+	private:
+		DraggableNumberBox& owner;
+	};
+
 	class DraggableNumberBox : public juce::Component {
 	public:
-		DraggableNumberBox(int minValue, int maxValue, int step = 1)
-			:minValue(minValue), maxValue(maxValue), step(step) {
-			addAndMakeVisible(numberLabel);
-			numberLabel.setJustificationType(juce::Justification::centred);
-			numberLabel.setEditable(false);
-			setValue(minValue);
-			updateLabel();
-			numberLabel.setInterceptsMouseClicks(false, false);
-			setInterceptsMouseClicks(true, true);
-		}
+		DraggableNumberBox(int minValue, int maxValue, int step = 1);
 
-		void resized() override {
-			numberLabel.setBounds(getLocalBounds());
-		}
+		void resized() override;
 
-		void mouseDown(const juce::MouseEvent& event) override {
-			startDragY = event.getPosition().getY();
-			initialValueOnDrag = currentValue;
-		}
+		void mouseDown(const juce::MouseEvent& event) override;
 
-		void mouseDrag(const juce::MouseEvent& event) override {
-			int deltaY = startDragY - event.getPosition().getY();
-			int increment = deltaY / 10;
-			int newValue = initialValueOnDrag + increment * step;
-			setValue(newValue);
-		}
+		void mouseDrag(const juce::MouseEvent& event) override;
 
-		void mouseEnter(const juce::MouseEvent& event) override {
-			setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
-		}
+		void mouseEnter(const juce::MouseEvent& event) override;
 
-		void mouseExit(const juce::MouseEvent& event) override {
-			setMouseCursor(juce::MouseCursor::NormalCursor);
-		}
+		void mouseExit(const juce::MouseEvent& event) override;
 
-		int getValue() const {
-			return currentValue;
-		}
+		int getValue() const;
 
-		void setValue(int newValue) {
-			currentValue = juce::jlimit(minValue, maxValue, newValue);
-			updateLabel();
-			if (vts_ptr != nullptr && !idToUse.isEmpty()) {
-				if (auto* intParam = dynamic_cast<juce::AudioParameterInt*>(vts_ptr->getParameter(idToUse))) {
-					intParam->setValueNotifyingHost(currentValue);
-				}
-			}
-		}
+		void setValue(int newValue);
 
-		void setVTS(juce::AudioProcessorValueTreeState* vts, juce::String idToUse) {
-			vts_ptr = vts;
-			idToUse = idToUse;
-			if (vts_ptr != nullptr && !idToUse.isEmpty()) {
-				if (auto* intParam = dynamic_cast<juce::AudioParameterInt*>(vts_ptr->getParameter(idToUse))) {
-					currentValue = intParam->get();
-					updateLabel();
-				}
-			}
-		}
+		void setVTS(juce::AudioProcessorValueTreeState* vts, juce::String idToUse);
+
+		void updateCurrentValueFromParameter(float normalizedValue);
+
+		juce::String getIdToUse();
 
 	private:
-		void updateLabel() {
-			numberLabel.setText(juce::String(currentValue), juce::dontSendNotification);
-		}
+		void updateLabel();
+
 		juce::Label numberLabel;
 		int currentValue = 0;
 		int minValue = 0;
@@ -79,5 +50,6 @@ namespace Akasha {
 		int initialValueOnDrag = 0;
 		juce::AudioProcessorValueTreeState* vts_ptr = nullptr;
 		juce::String idToUse;
+		std::unique_ptr<DraggableNumberBoxParameterListener> parameterListener;
 	};
 }

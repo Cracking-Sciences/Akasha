@@ -11,7 +11,7 @@
 
 AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, juce::AudioProcessorValueTreeState& vts):
 	AudioProcessorEditor(&p),
-	valueTreeState (vts),
+	valueTreeState(vts),
 	audioProcessor(p),
 	// codeDocument(),
 	// codeTokeniser(),
@@ -104,6 +104,8 @@ void AkashaAudioProcessorEditor::resized() {
 
 	valueTreeState.getParameterAsValue("editorWidth").setValue(getWidth());
 	valueTreeState.getParameterAsValue("editorHeight").setValue(getHeight());
+
+	// DBG("oversampling_factor: " + juce::String(valueTreeState.getRawParameterValue("oversampling_factor")->load()));
 }
 
 juce::String AkashaAudioProcessorEditor::getCodeString() const {

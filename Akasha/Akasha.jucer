@@ -26,6 +26,8 @@
                 file="Source/ui/oversampling_box/oversamplingBox.h"/>
         </GROUP>
         <GROUP id="{F752FA2C-6147-C0B6-BC00-A2D6674732E4}" name="draggable_number_box">
+          <FILE id="FWwI40" name="draggableNumberBox.cpp" compile="1" resource="0"
+                file="Source/ui/draggable_number_box/draggableNumberBox.cpp"/>
           <FILE id="NdkkqT" name="draggableNumberBox.h" compile="0" resource="0"
                 file="Source/ui/draggable_number_box/draggableNumberBox.h"/>
         </GROUP>
