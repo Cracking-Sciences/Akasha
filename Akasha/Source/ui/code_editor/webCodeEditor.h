@@ -95,13 +95,14 @@ namespace Akasha {
 		void compile() {
 			juce::String info;
 			giveInfo("Compiling...");
-			if (!jsEngine.loadFunction(getText().toStdString(), info)) {
+			if (!jsEngine.loadFunction(code.toStdString(), info)) {
 				giveInfo(info);
+				editAfterCompile = true;
 			}
 			else {
 				giveInfo("Compiled OK :D");
+				editAfterCompile = false;
 			}
-			editAfterCompile = false;
 		}
 
 		void setConsole(CodeConsole* console) {
@@ -109,6 +110,10 @@ namespace Akasha {
 		}
 
 		juce::String getText() {
+			return code;
+		}
+
+		void getTextFromPageAndCompile() {
 			juce::String jsCode =
 				R"(
     (function() {
@@ -126,45 +131,45 @@ namespace Akasha {
 						else {
 							code = evaluationResult.getResult()->toString();
 						}
-						// DBG("Inside evaluateJavascript callback: " + juce::String(getCurrentTime()));
+						// we don't know when will the code be updated due to the async nature of the evaluateJavascript function.
+						// so we compile the code in the callback.
+						compile();
+						// DBG(code);
 					}
 				);
-			}
-			{
-				// DBG("Before return code: " + juce::String(getCurrentTime()));
-				return code;
 			}
 		}
 
 		void setText(const juce::String& newText) {
+			code = newText;
 			{
 				emitEventIfBrowserIsVisible(SetTextEvent, newText);
 			}
+			// DBG(code);
 		}
 
 		void focusGained() {
-			// giveInfo("Focus gained.");
 			hasFocus = true;
 			repaint();
 		}
 
 		void focusLost() {
-			// giveInfo("Focus lost.");
 			hasFocus = false;
 			repaint();
 			if (editAfterCompile) {
-				compile();
+				giveInfo("");// clear the console
+				getTextFromPageAndCompile();
 			}
 		}
 
 		void paint(juce::Graphics& g) override {
 			juce::WebBrowserComponent::paint(g);
-			if (!hasFocus) {
-				juce::Colour overlayColour = juce::Colours::grey.withAlpha(0.2f);
-				auto bounds = getLocalBounds();
-				g.setColour(overlayColour);
-				g.fillRect(bounds);
-			}
+			// if (!hasFocus) {
+			// 	juce::Colour overlayColour = juce::Colours::grey.withAlpha(0.2f);
+			// 	auto bounds = getLocalBounds();
+			// 	g.setColour(overlayColour);
+			// 	g.fillRect(bounds);
+			// }
 		}
 
 		bool editAfterCompile = false;
@@ -175,6 +180,9 @@ namespace Akasha {
 
 	private:
 		void codeDocumentTextChanged() {
+			if (!editAfterCompile) {
+				giveInfo("");
+			}
 			editAfterCompile = true;
 		}
 
@@ -213,6 +221,7 @@ namespace Akasha {
 
 		void pageFinishedLoading(const juce::String& url) override {
 			pageLoaded = true;
+			setText(code);
 		}
 
 		CodeConsole* console = nullptr;
