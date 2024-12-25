@@ -27,6 +27,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	// console.
 	addAndMakeVisible(codeConsolePointer.get());
 	// code editor.
+
 	formulaEditorPointer->setConsole(codeConsolePointer.get());
 	addAndMakeVisible(formulaEditorPointer.get());
 	formulaEditorPointer->editAfterCompile = false;
