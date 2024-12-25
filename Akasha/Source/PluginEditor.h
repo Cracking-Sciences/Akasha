@@ -17,6 +17,8 @@
 #include "ui/macros/macros.h"
 #include "ui/code_editor/builtinCodeEditor.h"
 #include "ui/code_editor/webCodeEditor.h"
+#include "ui/oversampling_box/oversamplingBox.h"
+#include "ui/draggable_number_box/draggableNumberBox.h"
 
 class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor {
 public:
@@ -25,34 +27,14 @@ public:
 
 	void paint(juce::Graphics&) override;
 	void resized() override;
-	void mouseDown(const juce::MouseEvent& event) override;
 
-	juce::String getCodeString() const {
-		return formulaEditorPointer->getText();
-	}
-
-	void setCodeString(const juce::String& newText) {
-		formulaEditorPointer->setText(newText);
-	}
-
-	void setMacroText(const std::array<juce::String, 8>& newText) {
-		for (int i = 0; i < 8; ++i) {
-			macroSliderGroupPointer->setMacroText(i, newText[i]);
-		}
-	}
-
-	const std::array<juce::String, 8> getMacroText() {
-		std::array<juce::String, 8> result;
-		for (int i = 0; i < 8; ++i) {
-			result[i] = macroSliderGroupPointer->getMacroText(i);
-		}
-		return result;
-	}
-
-	void compile() {
-		formulaEditorPointer->compile();
-	}
-
+	juce::String getCodeString() const;
+	void setCodeString(const juce::String& newText); 
+	void setMacroText(const std::array<juce::String, 8>& newText);
+	void setOversampling(int newValue);
+	int getOversampling();
+	const std::array<juce::String, 8> getMacroText();
+	void compile();
 
 private:
 	AkashaAudioProcessor& audioProcessor;
@@ -67,6 +49,9 @@ private:
 	std::unique_ptr<Akasha::CodeConsole> codeConsolePointer;
 	// macro sliders.
 	std::unique_ptr<Akasha::Macros> macroSliderGroupPointer;
+	// oversampling factor.
+	std::unique_ptr<Akasha::OversamplingBox> oversamplingBoxPointer;
+
 	// custom look and feel.
 	Akasha::CustomLookAndFeel customLookAndFeel;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AkashaAudioProcessorEditor)

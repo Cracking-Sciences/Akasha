@@ -15,7 +15,7 @@
 namespace Akasha {
 	class CustomLookAndFeel : public juce::LookAndFeel_V4 {
 	public:
-		CustomLookAndFeel() {
+		CustomLookAndFeel()  : LookAndFeel_V4() {
 			setDefaultSansSerifTypeface(getCustomFont());
 			setColour(juce::CodeEditorComponent::backgroundColourId, juce::Colour(0xFF252525));
 			setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xFF353535));
@@ -24,14 +24,24 @@ namespace Akasha {
 			setColour(juce::Label::outlineColourId, outlineColour);
 			setColour(juce::Label::backgroundWhenEditingColourId, juce::Colour(0xFF303030));
 			setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xFF303030));
+
+			setColour(juce::ResizableWindow::backgroundColourId, juce::Colour(0xFF303030));
+			setColour(juce::DocumentWindow::backgroundColourId, juce::Colour(0xFF303030));
+			setColour(juce::ListBox::backgroundColourId, juce::Colour(0xFF303030));
+			setColour(juce::PopupMenu::backgroundColourId, juce::Colour(0xFF303030));
+			setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xFF303030));
+
+			setColour(juce::TextButton::buttonColourId, juce::Colour(0xFF303030));
+			setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xFF505050));
+
+			setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xFF303030));
 		}
+
 		static const juce::Typeface::Ptr getCustomFont() {
 			static auto typeface = juce::Typeface::createSystemTypefaceFor(din::DIN_ttf, din::DIN_ttfSize);
 			return typeface;
 		}
-		juce::Font getLabelFont(juce::Label& label) override {
-			return juce::Font(juce::Font::getDefaultSansSerifFontName(), 20.0f, juce::Font::plain);
-		}
+
 		void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
 			float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override {
 			const float thickness = 0.15f;
@@ -110,10 +120,25 @@ namespace Akasha {
 			drawCoolBorder(g, label.getLocalBounds(), outlineColour, 2, 7);
 		}
 
+		void drawButtonBackground(juce::Graphics& g, juce::Button& button,
+			const juce::Colour& backgroundColour,
+			bool isMouseOverButton, bool isButtonDown) override
+		{
+			auto bounds = button.getLocalBounds();
+
+			auto pressedColour = button.findColour(juce::TextButton::buttonOnColourId);
+
+			auto colour = isButtonDown ? pressedColour 
+				: (isMouseOverButton ? backgroundColour.brighter(0.2f) : backgroundColour);
+			drawCoolBackground(g, bounds, colour, 7);
+			drawCoolBorder(g, bounds, outlineColour, 2, 7);
+		}
+
 	private:
 		juce::Typeface::Ptr getTypefaceForFont(const juce::Font& f) override {
 			return getCustomFont();
 		}
+
 		void drawCoolBorder(juce::Graphics& g, const juce::Rectangle<int>& bounds, juce::Colour borderColour, float borderWidth, float cutDistance) {
 			int x1 = bounds.getRight();
 			int y1 = bounds.getBottom();
@@ -134,7 +159,6 @@ namespace Akasha {
 			int x1 = bounds.getRight();
 			int y1 = bounds.getBottom();
 
-			// 绘制右侧和下侧的边框路径
 			clipPath.startNewSubPath(bounds.getX(), bounds.getY());
 			clipPath.lineTo(x1 - cutDistance, bounds.getY());  // 右上角
 			clipPath.lineTo(x1, bounds.getY());               // 右侧上段

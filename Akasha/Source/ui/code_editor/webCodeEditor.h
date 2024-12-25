@@ -1,31 +1,11 @@
 
 #pragma once
-#include <chrono>
 #include <JuceHeader.h>
 #include "../console/console.h"
 #include "../../kernel/engine/JSEngine.h"
 #include "../../utilities/pack.h"
 
 namespace Akasha {
-
-	inline std::string getCurrentTime() {
-		auto now = std::chrono::system_clock::now();
-		auto duration = now.time_since_epoch();
-		auto micros = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
-
-		std::time_t t = std::chrono::system_clock::to_time_t(now);
-		std::tm tm;
-#if defined(_WIN32) || defined(_WIN64)
-		localtime_s(&tm, &t);
-#else
-		localtime_r(&t, &tm);
-#endif
-
-		std::ostringstream oss;
-		oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S.") << (micros % 1000000);
-		return oss.str();
-	}
-
 	inline auto streamToVector(juce::InputStream& stream) {
 		using namespace juce;
 		std::vector<std::byte> result((size_t)stream.getTotalLength());
@@ -59,7 +39,6 @@ namespace Akasha {
 		return "";
 	}
 
-
 	class webCodeEditor : public juce::WebBrowserComponent {
 	public:
 		webCodeEditor(Akasha::JSEngine& engine)
@@ -85,7 +64,6 @@ namespace Akasha {
 					})
 			),
 			jsEngine(engine) {
-			setWantsKeyboardFocus(true);
 			goToURL(getResourceProviderRoot());
 		}
 		~webCodeEditor() {
@@ -134,7 +112,6 @@ namespace Akasha {
 						// we don't know when will the code be updated due to the async nature of the evaluateJavascript function.
 						// so we compile the code in the callback.
 						compile();
-						// DBG(code);
 					}
 				);
 			}
@@ -145,7 +122,7 @@ namespace Akasha {
 			{
 				emitEventIfBrowserIsVisible(SetTextEvent, newText);
 			}
-			// DBG(code);
+			compile();
 		}
 
 		void focusGained() {

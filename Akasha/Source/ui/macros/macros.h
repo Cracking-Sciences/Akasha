@@ -33,8 +33,8 @@ namespace Akasha {
         }
 
 		~Macros() override {
-            sliders.clear();
             sliderAttachments.clear();
+            sliders.clear();
 		}
 
         void resized() override {

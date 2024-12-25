@@ -21,6 +21,14 @@
         </GROUP>
       </GROUP>
       <GROUP id="{18669A7D-4477-5232-8EC9-B1B816DC8299}" name="ui">
+        <GROUP id="{0ABA05C0-CFA1-E858-382D-E2D2608A463F}" name="oversampling_box">
+          <FILE id="hfgBKf" name="oversamplingBox.h" compile="0" resource="0"
+                file="Source/ui/oversampling_box/oversamplingBox.h"/>
+        </GROUP>
+        <GROUP id="{F752FA2C-6147-C0B6-BC00-A2D6674732E4}" name="draggable_number_box">
+          <FILE id="NdkkqT" name="draggableNumberBox.h" compile="0" resource="0"
+                file="Source/ui/draggable_number_box/draggableNumberBox.h"/>
+        </GROUP>
         <GROUP id="{C5231F03-B6FE-58DD-F8E1-4976C2C035DA}" name="slider">
           <FILE id="hp093G" name="slider.h" compile="0" resource="0" file="Source/ui/slider/slider.h"/>
         </GROUP>

@@ -30,6 +30,7 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 	for (int i = 0; i < 8; ++i) {
 		savedMacroText[i] = "m" + juce::String(i);
 	}
+
 	juce::String dummy;
 	jsEngine.loadFunction(savedCode.toStdString(), dummy);
 }
