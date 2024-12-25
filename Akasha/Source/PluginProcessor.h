@@ -79,7 +79,7 @@ public:
 
 	juce::String savedCode;
 	std::array<juce::String, 8> savedMacroText;
-	std::array<std::atomic<float>*, 8> macros;
+	
 
 private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AkashaAudioProcessor)
@@ -90,4 +90,8 @@ private:
 	std::vector<Akasha::AkashaVoice*> voices;
 	juce::AudioProcessorValueTreeState parameters;
 	std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
+	uint8_t currentOversamplingFactor = 0;
+	std::array<std::atomic<float>*, 8> macros;
+
+	void checkOversampler();
 };

@@ -91,11 +91,7 @@ void AkashaAudioProcessor::changeProgramName(int index, const juce::String& newN
 }
 
 void AkashaAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	uint8_t oversampling_factor = parameters.getRawParameterValue("oversampling_factor")->load();
-	synth.setCurrentPlaybackSampleRate(sampleRate * oversampling_factor);
-	constexpr auto filterType = juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR;
-	oversampler = std::make_unique<juce::dsp::Oversampling<float>>(2, oversampling_factor, filterType);
-	oversampler->initProcessing(samplesPerBlock);
+	checkOversampler();
 }
 
 void AkashaAudioProcessor::releaseResources() {
@@ -128,12 +124,25 @@ bool AkashaAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) co
 }
 #endif
 
+void AkashaAudioProcessor::checkOversampler() {
+	uint8_t oversampling_factor = parameters.getRawParameterValue("oversampling_factor")->load();
+	if (oversampling_factor != currentOversamplingFactor || oversampler == nullptr) {
+		currentOversamplingFactor = oversampling_factor;
+		constexpr auto filterType = juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR;
+		oversampler = std::make_unique<juce::dsp::Oversampling<float>>(2, oversampling_factor, filterType);
+		oversampler->initProcessing(getBlockSize());
+	}
+}
+
 void AkashaAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
 	juce::ScopedNoDenormals noDenormals;
 	auto totalNumInputChannels = getTotalNumInputChannels();
 	auto totalNumOutputChannels = getTotalNumOutputChannels();
 	for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
 		buffer.clear(i, 0, buffer.getNumSamples());
+
+	checkOversampler();
+
 	auto playHead = getPlayHead();
 	if (playHead != nullptr) {
 		juce::AudioPlayHead::CurrentPositionInfo position;
@@ -146,7 +155,7 @@ void AkashaAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 		voice_ptr->setGlobalParams(tempo, beat);
 	}
 
-	uint8_t oversampling_factor = parameters.getRawParameterValue("oversampling_factor")->load();
+	uint8_t oversampling_factor = currentOversamplingFactor;
 	juce::dsp::AudioBlock<float> block(buffer);
 	juce::dsp::AudioBlock<float> osBlock = oversampler->processSamplesUp(block);
 	float* p[] = {osBlock.getChannelPointer(0), osBlock.getChannelPointer(1)};
