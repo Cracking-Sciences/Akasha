@@ -19,6 +19,7 @@
 #include "ui/code_editor/webCodeEditor.h"
 #include "ui/oversampling_box/oversamplingBox.h"
 #include "ui/draggable_number_box/draggableNumberBox.h"
+#include "ui/adsr/adsr.h"
 
 class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Button::Listener {
 public:
@@ -57,6 +58,9 @@ private:
 	std::unique_ptr<juce::TextButton> saveButton;
 	std::unique_ptr<juce::TextButton> loadButton;
 	std::unique_ptr<juce::FileChooser> fileChooser;
+
+	// adsr
+	std::unique_ptr<Akasha::ADSRWindow> adsrWindowPointer;
 
 	// custom look and feel.
 	Akasha::CustomLookAndFeel customLookAndFeel;

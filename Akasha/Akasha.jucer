@@ -24,6 +24,10 @@
         </GROUP>
       </GROUP>
       <GROUP id="{18669A7D-4477-5232-8EC9-B1B816DC8299}" name="ui">
+        <GROUP id="{E5A56816-99E9-838A-7CA2-7D9BB395A3B8}" name="adsr">
+          <FILE id="dF1uPQ" name="adsr.cpp" compile="1" resource="0" file="Source/ui/adsr/adsr.cpp"/>
+          <FILE id="jQ1PqT" name="adsr.h" compile="0" resource="0" file="Source/ui/adsr/adsr.h"/>
+        </GROUP>
         <GROUP id="{0ABA05C0-CFA1-E858-382D-E2D2608A463F}" name="oversampling_box">
           <FILE id="hfgBKf" name="oversamplingBox.h" compile="0" resource="0"
                 file="Source/ui/oversampling_box/oversamplingBox.h"/>
