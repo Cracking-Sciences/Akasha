@@ -73,7 +73,8 @@ namespace Akasha {
 			actionType = RemoveCurvature;
 			setCurvature(0.0f, currentHoldStage);
 			sendChangeMessage();
-		}else {
+		}
+		else {
 			actionType = DragCurvature;
 		}
 	}
@@ -91,7 +92,7 @@ namespace Akasha {
 		switch (actionType) {
 		case RemoveCurvature:
 			break;
-		case DragCurvature:	
+		case DragCurvature:
 			if (curvature < minCurvature) curvature = minCurvature;
 			if (curvature > maxCurvature) curvature = maxCurvature;
 			setCurvature(curvature, currentHoldStage);
@@ -260,7 +261,8 @@ namespace Akasha {
 	float SingleCurve::getPoint(float x) {
 		if (x < 0.0f) {
 			return startingValue;
-		} else if (x > curveLength) {
+		}
+		else if (x > curveLength) {
 			return endingValue;
 		}
 
@@ -269,12 +271,79 @@ namespace Akasha {
 		float adjustedX = 0.0f;
 		if (curvature == 0.0f) {
 			adjustedX = x;
-		} else if (curvature > 0.0f) {
+		}
+		else if (curvature > 0.0f) {
 			adjustedX = powf(x, 1.0f + curvature);
-		} else {
+		}
+		else {
 			adjustedX = 1.0f - powf(1.0f - x, 1.0f - curvature);
 		}
 
 		return startingValue + (endingValue - startingValue) * adjustedX;
+	}
+
+	ADSRWidget::ADSRWidget() {
+		attackSlider.setSliderRange(0.0, 10.0);
+		attackSlider.setSliderRatio(sliderKnobRatio);
+		attackSlider.setTextWidth(sliderTextWidth);
+		holdSlider.setSliderRange(0.0, 10.0);
+		holdSlider.setSliderRatio(sliderKnobRatio);
+		holdSlider.setTextWidth(sliderTextWidth);
+		decaySlider.setSliderRange(0.0, 10.0);
+		decaySlider.setSliderRatio(sliderKnobRatio);
+		decaySlider.setTextWidth(sliderTextWidth);
+		sustainSlider.setSliderRange(0.0, 1.0);
+		sustainSlider.setSliderRatio(sliderKnobRatio);
+		sustainSlider.setTextWidth(sliderTextWidth);
+		releaseSlider.setSliderRange(0.0, 10.0);
+		releaseSlider.setSliderRatio(sliderKnobRatio);
+		releaseSlider.setTextWidth(sliderTextWidth);
+
+		attackSlider.getSlider().onValueChange = [this]() {
+			float value = attackSlider.getSlider().getValue();
+			adsrWindow.setAttack(value);
+			};
+		holdSlider.getSlider().onValueChange = [this]() {
+			float value = holdSlider.getSlider().getValue();
+			adsrWindow.setHold(value);
+			};
+		decaySlider.getSlider().onValueChange = [this]() {
+			float value = decaySlider.getSlider().getValue();
+			adsrWindow.setDecay(value);
+			};
+		sustainSlider.getSlider().onValueChange = [this]() {
+			float value = sustainSlider.getSlider().getValue();
+			adsrWindow.setSustain(value);
+			};
+		releaseSlider.getSlider().onValueChange = [this]() {
+			float value = releaseSlider.getSlider().getValue();
+			adsrWindow.setRelease(value);
+			};
+
+		addAndMakeVisible(attackSlider);
+		addAndMakeVisible(holdSlider);
+		addAndMakeVisible(decaySlider);
+		addAndMakeVisible(sustainSlider);
+		addAndMakeVisible(releaseSlider);
+		addAndMakeVisible(adsrWindow);
+	}
+
+	ADSRWidget::~ADSRWidget() {}
+
+	void ADSRWidget::resized() {
+		juce::Rectangle<int> bounds = getLocalBounds();
+		int sliderHeight = 50; 
+		juce::FlexBox flexBox;
+		flexBox.flexDirection = juce::FlexBox::Direction::row; 
+		flexBox.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
+		flexBox.alignItems = juce::FlexBox::AlignItems::stretch;
+		flexBox.items.add(juce::FlexItem(attackSlider).withHeight(sliderHeight).withFlex(1));
+		flexBox.items.add(juce::FlexItem(holdSlider).withHeight(sliderHeight).withFlex(1));
+		flexBox.items.add(juce::FlexItem(decaySlider).withHeight(sliderHeight).withFlex(1));
+		flexBox.items.add(juce::FlexItem(sustainSlider).withHeight(sliderHeight).withFlex(1));
+		flexBox.items.add(juce::FlexItem(releaseSlider).withHeight(sliderHeight).withFlex(1));
+		auto sliderArea = bounds.removeFromBottom(sliderHeight);
+		flexBox.performLayout(sliderArea);
+		adsrWindow.setBounds(bounds);
 	}
 }

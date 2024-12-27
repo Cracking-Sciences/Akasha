@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "../slider/slider.h"
 
 namespace Akasha {
 	class SingleCurve {
@@ -67,4 +68,30 @@ namespace Akasha {
 		Stage getSegmentIndex(int sampleIndex);
 	};
 
+	class ADSRWidget : public juce::Component {
+	public:
+		ADSRWidget();
+		~ADSRWidget();
+		void resized() override;
+		// void setAttack(float v);
+		// void setHold(float v);
+		// void setDecay(float v);
+		// void setSustain(float v);
+		// void setRelease(float v);
+		// float getAttack();
+		// float getHold();
+		// float getDecay();
+		// float getSustain();
+		// float getRelease();
+		// void getValue(float timeNow, bool isRelease, float timeAtRelease, float& v, bool& stop);
+	private:
+		ADSRWindow adsrWindow;
+		SliderWithLabel attackSlider{ "A" };
+		SliderWithLabel holdSlider{ "H" };
+		SliderWithLabel decaySlider{ "D" };
+		SliderWithLabel sustainSlider{ "S" };
+		SliderWithLabel releaseSlider{ "R" };
+		float sliderKnobRatio = 2.0f;
+		float sliderTextWidth = 20.0f;
+	};
 }

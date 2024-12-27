@@ -60,7 +60,7 @@ private:
 	std::unique_ptr<juce::FileChooser> fileChooser;
 
 	// adsr
-	std::unique_ptr<Akasha::ADSRWindow> adsrWindowPointer;
+	std::unique_ptr<Akasha::ADSRWidget> adsrWindowPointer;
 
 	// custom look and feel.
 	Akasha::CustomLookAndFeel customLookAndFeel;

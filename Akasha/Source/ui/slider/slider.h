@@ -36,7 +36,7 @@ namespace Akasha {
 			juce::FlexBox flexBox;
 			flexBox.flexDirection = juce::FlexBox::Direction::column;
 			flexBox.items.add(juce::FlexItem(label).withMinHeight(10.0f).withFlex(1.0f));
-			flexBox.items.add(juce::FlexItem(slider).withFlex(5.0f));
+			flexBox.items.add(juce::FlexItem(slider).withFlex(sliderRatio));
 			flexBox.performLayout(getLocalBounds());
 		}
 
@@ -52,9 +52,22 @@ namespace Akasha {
 			return textWidth;
 		}
 
+		void setTextWidth(float width) {
+			textWidth = width;
+		}
+
+		void setSliderRatio(float ratio) {
+			sliderRatio = ratio;
+		}
+
+		void setSliderRange(double min, double max) {
+			slider.setRange(min, max);
+		}
+
 	private:
 		juce::Slider slider;
 		juce::Label label;
+		float sliderRatio = 5.0f;
 		float textWidth = 80.0f;
 	};
 }
