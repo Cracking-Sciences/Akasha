@@ -31,8 +31,10 @@ namespace Akasha {
 			setColour(juce::PopupMenu::backgroundColourId, juce::Colour(0xFF303030));
 			setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xFF303030));
 
-			setColour(juce::TextButton::buttonColourId, juce::Colour(0xFF303030));
+			setColour(juce::TextButton::buttonColourId, outlineColour);
 			setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xFF505050));
+			setColour(juce::TextButton::textColourOffId, juce::Colour(0xFF202020));
+			setColour(juce::TextButton::textColourOnId, juce::Colour(0xFF202020));
 
 			setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xFF303030));
 		}

@@ -20,7 +20,7 @@
 #include "ui/oversampling_box/oversamplingBox.h"
 #include "ui/draggable_number_box/draggableNumberBox.h"
 
-class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor {
+class AkashaAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Button::Listener {
 public:
 	AkashaAudioProcessorEditor(AkashaAudioProcessor& p, juce::AudioProcessorValueTreeState& vts);
 	~AkashaAudioProcessorEditor() override;
@@ -31,10 +31,11 @@ public:
 	juce::String getCodeString() const;
 	void setCodeString(const juce::String& newText); 
 	void setMacroText(const std::array<juce::String, 8>& newText);
-	void setOversampling(int newValue);
-	int getOversampling();
 	const std::array<juce::String, 8> getMacroText();
 	void compile();
+
+
+	void buttonClicked(juce::Button* button) override;
 
 private:
 	AkashaAudioProcessor& audioProcessor;
@@ -51,6 +52,11 @@ private:
 	std::unique_ptr<Akasha::Macros> macroSliderGroupPointer;
 	// oversampling factor.
 	std::unique_ptr<Akasha::OversamplingBox> oversamplingBoxPointer;
+
+	// save / load
+	std::unique_ptr<juce::TextButton> saveButton;
+	std::unique_ptr<juce::TextButton> loadButton;
+	std::unique_ptr<juce::FileChooser> fileChooser;
 
 	// custom look and feel.
 	Akasha::CustomLookAndFeel customLookAndFeel;

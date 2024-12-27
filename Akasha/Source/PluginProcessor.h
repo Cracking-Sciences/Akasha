@@ -86,12 +86,12 @@ private:
 		Akasha::JSEngine jsEngine;
 	double tempo = 0.;
 	double beat = 0.;
+	uint8_t currentOversamplingFactor = 0;
+	std::array<std::atomic<float>*, 8> macros;
 	juce::Synthesiser synth;
 	std::vector<Akasha::AkashaVoice*> voices;
 	juce::AudioProcessorValueTreeState parameters;
-	std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
-	uint8_t currentOversamplingFactor = 0;
-	std::array<std::atomic<float>*, 8> macros;
 
+	std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
 	void checkOversampler();
 };

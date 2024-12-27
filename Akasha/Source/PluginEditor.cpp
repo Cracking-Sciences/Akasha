@@ -19,10 +19,17 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	formulaEditorPointer(std::make_unique<Akasha::webCodeEditor>(audioProcessor.getJSEngine())),
 	macroSliderGroupPointer(std::make_unique<Akasha::Macros>(vts)),
 	codeConsolePointer(std::make_unique<Akasha::CodeConsole>()),
-	oversamplingBoxPointer(std::make_unique<Akasha::OversamplingBox>("oversampling 2^", vts, "oversampling_factor"))
+	oversamplingBoxPointer(std::make_unique<Akasha::OversamplingBox>("oversampling 2^", vts, "oversampling_factor")),
+	saveButton(std::make_unique<juce::TextButton>("Save")),
+	loadButton(std::make_unique<juce::TextButton>("Load"))
 {
 	// juce::LookAndFeel::setDefaultLookAndFeel(&customLookAndFeel);
 	setLookAndFeel(&customLookAndFeel);
+	// save / load
+	addAndMakeVisible(saveButton.get());
+	addAndMakeVisible(loadButton.get());
+	saveButton->addListener(this);
+	loadButton->addListener(this);
 	// macros
 	addAndMakeVisible(macroSliderGroupPointer.get());
 	// console.
@@ -33,7 +40,6 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	formulaEditorPointer->editAfterCompile = false;
 	// oversampling
 	addAndMakeVisible(oversamplingBoxPointer.get());
-
 	// main editor.
 	int savedWidth = valueTreeState.getParameterAsValue("editorWidth").getValue();
 	int savedHeight = valueTreeState.getParameterAsValue("editorHeight").getValue();
@@ -56,6 +62,8 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 
 AkashaAudioProcessorEditor::~AkashaAudioProcessorEditor() {
 	// report current texts before closing.
+	saveButton->removeListener(this);
+	loadButton->removeListener(this);
 	audioProcessor.savedCode = getCodeString();
 	audioProcessor.savedMacroText = getMacroText();
 	setLookAndFeel(nullptr);
@@ -76,11 +84,18 @@ void AkashaAudioProcessorEditor::mouseDown(const juce::MouseEvent& event) {
 
 void AkashaAudioProcessorEditor::resized() {
 	juce::FlexBox mainFlexBox;
+	juce::FlexBox controlsBox;
 	juce::FlexBox textEditorBox;
 	juce::FlexBox buttomWidgetsBox;
 
 	mainFlexBox.flexDirection = juce::FlexBox::Direction::column;
 
+	{
+		controlsBox.flexDirection = juce::FlexBox::Direction::row;
+		controlsBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+		controlsBox.items.add(juce::FlexItem(*saveButton).withMinWidth(50.0f));
+		controlsBox.items.add(juce::FlexItem(*loadButton).withMinWidth(50.0f));
+	}
 	{
 		textEditorBox.flexDirection = juce::FlexBox::Direction::column;
 		textEditorBox.justifyContent = juce::FlexBox::JustifyContent::center;
@@ -89,14 +104,13 @@ void AkashaAudioProcessorEditor::resized() {
 		textEditorBox.items.add(juce::FlexItem(*codeConsolePointer).withMinHeight(40.0f)
 			.withMargin(juce::FlexItem::Margin(0.0f)));
 	}
-
 	{	buttomWidgetsBox.flexDirection = juce::FlexBox::Direction::row;
 		buttomWidgetsBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-		buttomWidgetsBox.items.add(juce::FlexItem(*macroSliderGroupPointer).withMinWidth(700.0f));
+		buttomWidgetsBox.items.add(juce::FlexItem(*macroSliderGroupPointer).withMinWidth(640.0f));
 		buttomWidgetsBox.items.add(juce::FlexItem(*oversamplingBoxPointer).withMinWidth(180.0f));
 	}
 
-
+	mainFlexBox.items.add(juce::FlexItem(controlsBox).withMinHeight(25.0f).withMinWidth(getWidth()));
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));
 	mainFlexBox.items.add(juce::FlexItem(buttomWidgetsBox).withMinHeight(90.0f).withMinWidth(getWidth())); 
 
@@ -132,4 +146,36 @@ const std::array<juce::String, 8> AkashaAudioProcessorEditor::getMacroText() {
 
 void AkashaAudioProcessorEditor::compile() {
 	formulaEditorPointer->compile();
+}
+
+void AkashaAudioProcessorEditor::buttonClicked(juce::Button* button)
+{
+	if (button == saveButton.get())
+	{
+		fileChooser = std::make_unique<juce::FileChooser>("Save Preset", juce::File(), "*.aks");
+		fileChooser->launchAsync(juce::FileBrowserComponent::saveMode, [this](const juce::FileChooser& chooser) {
+			auto file = chooser.getResult();
+			if (file != juce::File{})
+			{
+				juce::MemoryBlock state;
+				processor.getStateInformation(state);
+				file.replaceWithData(state.getData(), state.getSize());
+			}
+			});
+	}
+	else if (button == loadButton.get())
+	{
+		fileChooser = std::make_unique<juce::FileChooser>("Load Preset", juce::File(), "*.aks");
+		fileChooser->launchAsync(juce::FileBrowserComponent::openMode, [this](const juce::FileChooser& chooser) {
+			auto file = chooser.getResult();
+			if (file != juce::File{})
+			{
+				juce::MemoryBlock state;
+				if (file.loadFileAsData(state))
+				{
+					processor.setStateInformation(state.getData(), static_cast<int>(state.getSize()));
+				}
+			}
+		});
+	}
 }

@@ -9,6 +9,9 @@
         <FILE id="JwbF7O" name="pack.h" compile="0" resource="0" file="Source/utilities/pack.h"/>
       </GROUP>
       <GROUP id="{C4B5F302-6855-4653-A89B-F7A012701DF5}" name="kernel">
+        <GROUP id="{BE82C61A-B0A3-541F-A50C-A4797E1D86CB}" name="dc_blocker">
+          <FILE id="L4Gnaw" name="dcBlocker.h" compile="0" resource="0" file="Source/kernel/dc_blocker/dcBlocker.h"/>
+        </GROUP>
         <GROUP id="{FB24901B-C297-4F95-27CA-9E4D2ACA76C9}" name="engine">
           <FILE id="sli3yI" name="defaultJSCode.h" compile="0" resource="0" file="Source/kernel/engine/defaultJSCode.h"/>
           <FILE id="GErENw" name="JSEngine.cpp" compile="1" resource="0" file="Source/kernel/engine/JSEngine.cpp"/>

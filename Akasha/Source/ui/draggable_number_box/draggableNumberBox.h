@@ -4,19 +4,12 @@
 #include <JuceHeader.h>
 
 namespace Akasha {
-	class DraggableNumberBox;
-
-	class DraggableNumberBoxParameterListener : public juce::AudioProcessorValueTreeState::Listener {
-	public:
-		DraggableNumberBoxParameterListener(DraggableNumberBox& owner) : owner(owner) {}
-		void parameterChanged(const juce::String& parameterID, float newValue) override;
-	private:
-		DraggableNumberBox& owner;
-	};
-
-	class DraggableNumberBox : public juce::Component {
+	class DraggableNumberBox : public juce::Component
+, private juce::AudioProcessorValueTreeState::Listener{
 	public:
 		DraggableNumberBox(int minValue, int maxValue, int step = 1);
+
+		~DraggableNumberBox();
 
 		void resized() override;
 
@@ -28,18 +21,18 @@ namespace Akasha {
 
 		void mouseExit(const juce::MouseEvent& event) override;
 
+		void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
+
 		int getValue() const;
 
 		void setValue(int newValue);
 
 		void setVTS(juce::AudioProcessorValueTreeState* vts, juce::String idToUse);
 
-		void updateCurrentValueFromParameter(float normalizedValue);
-
-		juce::String getIdToUse();
-
 	private:
 		void updateLabel();
+
+		void parameterChanged(const juce::String& parameterID, float newValue) override;
 
 		juce::Label numberLabel;
 		int currentValue = 0;
@@ -50,6 +43,5 @@ namespace Akasha {
 		int initialValueOnDrag = 0;
 		juce::AudioProcessorValueTreeState* vts_ptr = nullptr;
 		juce::String idToUse;
-		std::unique_ptr<DraggableNumberBoxParameterListener> parameterListener;
 	};
 }
