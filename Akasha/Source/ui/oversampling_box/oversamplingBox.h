@@ -22,11 +22,13 @@ namespace Akasha {
 		void resized() override {
 			juce::Rectangle<int> bounds = getLocalBounds();
 			juce::FlexBox flexBox;
+			int width = bounds.getWidth();
+			int height = bounds.getHeight();
 			flexBox.flexDirection = juce::FlexBox::Direction::row;
 			flexBox.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
-			flexBox.items.add(juce::FlexItem(label).withHeight(25.0f).withMinWidth(160.0f));
-			flexBox.items.add(juce::FlexItem(box).withHeight(25.0f).withMinWidth(25.0f));
-			flexBox.performLayout(getLocalBounds());
+			flexBox.items.add(juce::FlexItem(label).withHeight(height).withMinWidth(width-height));
+			flexBox.items.add(juce::FlexItem(box).withHeight(height).withMinWidth(height));
+			flexBox.performLayout(bounds);
 		}
 
 		int getValue() const {

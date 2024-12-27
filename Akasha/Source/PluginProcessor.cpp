@@ -33,6 +33,7 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 
 	juce::String dummy;
 	jsEngine.loadFunction(savedCode.toStdString(), dummy);
+	adsrKernel.calcPoints();
 }
 
 AkashaAudioProcessor::~AkashaAudioProcessor(){

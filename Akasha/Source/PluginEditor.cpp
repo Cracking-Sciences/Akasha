@@ -22,7 +22,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	oversamplingBoxPointer(std::make_unique<Akasha::OversamplingBox>("oversampling 2^", vts, "oversampling_factor")),
 	saveButton(std::make_unique<juce::TextButton>("Save")),
 	loadButton(std::make_unique<juce::TextButton>("Load")),
-	adsrWindowPointer(std::make_unique<Akasha::ADSRWidget>())
+	adsrWindowPointer(std::make_unique<Akasha::ADSRWidget>(audioProcessor.adsrKernel))
 {
 	// juce::LookAndFeel::setDefaultLookAndFeel(&customLookAndFeel);
 	setLookAndFeel(&customLookAndFeel);
@@ -109,14 +109,14 @@ void AkashaAudioProcessorEditor::resized() {
 	}
 	{	buttomWidgetsBox.flexDirection = juce::FlexBox::Direction::row;
 		buttomWidgetsBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-		buttomWidgetsBox.items.add(juce::FlexItem(*macroSliderGroupPointer).withMinWidth(640.0f));
-		buttomWidgetsBox.items.add(juce::FlexItem(*oversamplingBoxPointer).withMinWidth(180.0f));
-		buttomWidgetsBox.items.add(juce::FlexItem(*adsrWindowPointer).withMinWidth(150.0f));
+		buttomWidgetsBox.items.add(juce::FlexItem(*macroSliderGroupPointer).withMinWidth(400.0f));
+		buttomWidgetsBox.items.add(juce::FlexItem(*adsrWindowPointer).withMinWidth(340.0f));
+		buttomWidgetsBox.items.add(juce::FlexItem(*oversamplingBoxPointer).withMinWidth(180.0f).withMaxHeight(20.0f));
 	}
 
 	mainFlexBox.items.add(juce::FlexItem(controlsBox).withMinHeight(25.0f).withMinWidth(getWidth()));
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));
-	mainFlexBox.items.add(juce::FlexItem(buttomWidgetsBox).withMinHeight(90.0f).withMinWidth(getWidth())); 
+	mainFlexBox.items.add(juce::FlexItem(buttomWidgetsBox).withMinHeight(180.0f).withMinWidth(getWidth())); 
 
 	mainFlexBox.performLayout(getLocalBounds().reduced(3.0f));
 

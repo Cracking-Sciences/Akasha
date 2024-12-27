@@ -39,16 +39,27 @@ namespace Akasha {
 
         void resized() override {
             juce::FlexBox macroSlidersBox;
-            macroSlidersBox.flexDirection = juce::FlexBox::Direction::row;
-            macroSlidersBox.flexWrap = juce::FlexBox::Wrap::wrap;
+            juce::FlexBox row1;
+			juce::FlexBox row2;
+            macroSlidersBox.flexDirection = juce::FlexBox::Direction::column;
+            macroSlidersBox.flexWrap = juce::FlexBox::Wrap::noWrap;
             macroSlidersBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
 
-            for (auto* slider : sliders) {
-                macroSlidersBox.items.add(
-                    juce::FlexItem(*slider).withMinWidth(slider->getTextWidth()).withMinHeight(60.0f)
+			float width = getLocalBounds().getWidth();
+			float height = getLocalBounds().getHeight();
+
+            for (int i = 0; i < 4;i++) {
+                row1.items.add(
+                    juce::FlexItem(*sliders[i]).withMinWidth(width / 4).withMinHeight(height / 2)
                 );
             }
-
+			for (int i = 4; i < 8; i++) {
+				row2.items.add(
+					juce::FlexItem(*sliders[i]).withMinWidth(width / 4).withMinHeight(height / 2)
+				);
+			}
+			macroSlidersBox.items.add(juce::FlexItem(row1).withFlex(1.0));
+			macroSlidersBox.items.add(juce::FlexItem(row2).withFlex(1.0));
             macroSlidersBox.performLayout(getLocalBounds());
         }
 
@@ -61,7 +72,6 @@ namespace Akasha {
 		}
 
         typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
-        // typedef juce::AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
     private:
         juce::AudioProcessorValueTreeState& valueTreeState;
         juce::OwnedArray<Akasha::SliderWithLabel> sliders;

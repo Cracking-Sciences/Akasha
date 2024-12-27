@@ -5,6 +5,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include "kernel/voice/voice.h"
 #include "kernel/engine/defaultJSCode.h"
+#include "ui/adsr/adsr.h"
 
 // sound
 namespace Akasha {
@@ -32,6 +33,15 @@ namespace Akasha {
 			"editorHeight", "Editor Height", 800, std::numeric_limits<int>::max(), 1000));
 		// Oversampling
 		layout.add(std::make_unique<juce::AudioParameterInt>("oversampling_factor", "oversampling_factor", 0, 3, 1));
+		// main ADSR
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack", "adsr_attack", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.1f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack_curvature", "adsr_attack_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), 0.0f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_hold", "adsr_hold", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.1f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_decay", "adsr_decay", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.1f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_decay_curvature", "adsr_decay_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), 0.0f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_sustain", "adsr_sustain", juce::NormalisableRange<float>(0.0f, 1.f, 0.001f), 1.0f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release", "adsr_release", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.1f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release_curvature", "adsr_release_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), 0.0f));
 		return layout;
 	}
 }
@@ -79,6 +89,7 @@ public:
 
 	juce::String savedCode;
 	std::array<juce::String, 8> savedMacroText;
+	Akasha::ADSRKernel adsrKernel;
 	
 
 private:
@@ -91,7 +102,7 @@ private:
 	juce::Synthesiser synth;
 	std::vector<Akasha::AkashaVoice*> voices;
 	juce::AudioProcessorValueTreeState parameters;
-
+	
 	std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
 	void checkOversampler();
 };
