@@ -9,9 +9,21 @@ namespace Akasha {
 	}
 
 	ADSRKernel::~ADSRKernel(){
+		// if (vts_ptr != nullptr) {
+		// 	for (auto& id : idToUseVector) {
+		// 		vts_ptr->removeParameterListener(id, this);
+		// 	}
+		// }
+	}
+
+	float ADSRKernel::getTarget(int target) {
+		return targets[target];
+	}
+
+	void ADSRKernel::setTarget(int target, float v) {
 		if (vts_ptr != nullptr) {
-			for (auto& id : idToUseVector) {
-				vts_ptr->removeParameterListener(id, this);
+			if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(vts_ptr->getParameter(idToUseVector[target]))) {
+				floatParam->setValueNotifyingHost(floatParam->convertTo0to1(v));
 			}
 		}
 	}
@@ -115,7 +127,9 @@ namespace Akasha {
 		vts_ptr = vts;
 		idToUseVector[target] = idToUse;
 		vts_ptr->addParameterListener(idToUse, this);
-		targets[target] = vts_ptr->getParameter(idToUse)->getValue();
+		if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(vts_ptr->getParameter(idToUse))) {
+			targets[target] = floatParam->get();
+		}
 	}
 
 	void ADSRKernel::parameterChanged(const juce::String& parameterID, float newValue) {
@@ -135,6 +149,7 @@ namespace Akasha {
 	}
 
 	ADSRWindow::~ADSRWindow() {
+		removeChangeListener(this);
 	}
 
 
@@ -355,8 +370,10 @@ namespace Akasha {
 		return startingValue + (endingValue - startingValue) * adjustedX;
 	}
 
-	ADSRWidget::ADSRWidget(ADSRKernel& adsrKernel):
-		adsrWindow(std::make_unique<ADSRWindow>(adsrKernel)) {
+	ADSRWidget::ADSRWidget(ADSRKernel& adsrKernel) :
+		adsrKernel(adsrKernel),
+		adsrWindow(std::make_unique<ADSRWindow>(adsrKernel)) 
+	{
 		attackSlider.getSlider().setRange(0.0, 10.0, 0.001);
 		holdSlider.getSlider().setRange(0.0, 10.0, 0.001);
 		decaySlider.getSlider().setRange(0.0, 10.0, 0.001);
@@ -394,7 +411,6 @@ namespace Akasha {
 			float value = releaseSlider.getSlider().getValue();
 			adsrWindow->setRelease(value);
 			};
-
 		addAndMakeVisible(attackSlider);
 		addAndMakeVisible(holdSlider);
 		addAndMakeVisible(decaySlider);
@@ -404,6 +420,17 @@ namespace Akasha {
 	}
 
 	ADSRWidget::~ADSRWidget() {}
+
+	void ADSRWidget::paint(juce::Graphics& g) {
+		// when a new preset is loaded, the sliders should be updated.
+		// The processor will call editor to repaint everything.
+		// So this will work.
+		attackSlider.getSlider().setValue(adsrKernel.getTarget(0));
+		holdSlider.getSlider().setValue(adsrKernel.getTarget(2));
+		decaySlider.getSlider().setValue(adsrKernel.getTarget(3));
+		sustainSlider.getSlider().setValue(adsrKernel.getTarget(5));
+		releaseSlider.getSlider().setValue(adsrKernel.getTarget(6));
+	}
 
 	void ADSRWidget::resized() {
 		juce::Rectangle<int> bounds = getLocalBounds();

@@ -33,6 +33,15 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 
 	juce::String dummy;
 	jsEngine.loadFunction(savedCode.toStdString(), dummy);
+
+	adsrKernel.setVTS(&parameters, "adsr_attack", 0);
+	adsrKernel.setVTS(&parameters, "adsr_attack_curvature", 1);
+	adsrKernel.setVTS(&parameters, "adsr_hold", 2);
+	adsrKernel.setVTS(&parameters, "adsr_decay", 3);
+	adsrKernel.setVTS(&parameters, "adsr_decay_curvature", 4);
+	adsrKernel.setVTS(&parameters, "adsr_sustain", 5);
+	adsrKernel.setVTS(&parameters, "adsr_release", 6);
+	adsrKernel.setVTS(&parameters, "adsr_release_curvature", 7);
 	adsrKernel.calcPoints();
 }
 
@@ -223,6 +232,7 @@ void AkashaAudioProcessor::setStateInformation(const void* data, int sizeInBytes
 		editor->setCodeString(savedCode);
 		editor->setMacroText(savedMacroText);
 		editor->compile();
+		editor->repaint();
 	}
 	else {
 		juce::String dummy;

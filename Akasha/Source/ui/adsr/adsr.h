@@ -27,46 +27,42 @@ namespace Akasha {
 			Release = 3
 		};
 		
-		float getTarget(int target) {
-			return targets[target];
-		}
+		float getTarget(int target);
 
-		void setTarget(int target, float v) {
-			targets[target] = v;
-			if (vts_ptr != nullptr) {
-				if (auto* intParam = dynamic_cast<juce::AudioParameterFloat*>(vts_ptr->getParameter(idToUseVector[0]))) {
-					intParam->setValueNotifyingHost(targets[target]);
-				}
-			}
-		}
+		void setTarget(int target, float v);
 
-		int numPoints = 1024;
-		float minCurvature = -20.0f;
-		float maxCurvature = 20.0f;
+		// called for drawing
+		void calcPoints();
+		// called for drawing
+		float getPoint(float x);
+		// called when use it for actual use (audio volume)
+		void getValue(float timeNow, bool isRelease, float timeAtRelease, float& v, bool& stop);
+		// called for vts register at processor
+		void setVTS(juce::AudioProcessorValueTreeState* vts, juce::String idToUse, int target);
+
+		const int numPoints = 1024;
+		const float minCurvature = -20.0f;
+		const float maxCurvature = 20.0f;
+
 		std::unique_ptr<std::vector<float>> envelope;
 		std::unique_ptr<std::vector<SingleCurve>> curves;
-		void calcPoints();
-		float getPoint(float x);
-		void getValue(float timeNow, bool isRelease, float timeAtRelease, float& v, bool& stop);
-		void setVTS(juce::AudioProcessorValueTreeState* vts, juce::String idToUse, int target);
+
 	private:
-		// 8 vts targets
+		// in total 8 vts targets
+		// 0  attack = 0.1f;
+		// 1  attackCurvature = 0.0f;
+		// 2  hold = 0.1f;
+		// 3  decay = 0.1f;
+		// 4  decacyCurvature = 0.0f;
+		// 5  sustain = 0.1f; // 0.0 to 1.0
+		// 6  release = 0.1f;
+		// 7  releaseCurvature = 0.0f;
 		float targets[8] = {
 			0.1f,0.0f,0.1f,0.1f,0.0f,1.0f,0.1f,0.0f
 		};
 
-		// 0 float attack = 0.1f;
-		// 1 float attackCurvature = 0.0f;
-		// 2 float hold = 0.1f;
-		// 3 float decay = 0.1f;
-		// 4 float decacyCurvature = 0.0f;
-		// 5 float sustain = 0.1f; // 0.0 to 1.0
-		// 6 float release = 0.1f;
-		// 7 float releaseCurvature = 0.0f;
-
 		void parameterChanged(const juce::String& parameterID, float newValue) override;
 		juce::AudioProcessorValueTreeState* vts_ptr = nullptr;
-		ADSRWindow* adsrWindow = nullptr;
 		std::vector<juce::String> idToUseVector;
 	};
 
@@ -105,7 +101,9 @@ namespace Akasha {
 		ADSRWidget(ADSRKernel& adsrKernel);
 		~ADSRWidget();
 		void resized() override;
+		void paint(juce::Graphics& g) override;
 	private:
+		ADSRKernel& adsrKernel;
 		std::unique_ptr<ADSRWindow> adsrWindow;
 		SliderWithLabel attackSlider{ "Attack" };
 		SliderWithLabel holdSlider{ "Hold" };
