@@ -58,6 +58,8 @@ private:
 	std::unique_ptr<juce::TextButton> saveButton;
 	std::unique_ptr<juce::TextButton> loadButton;
 	std::unique_ptr<juce::FileChooser> fileChooser;
+	// view dependency
+	std::unique_ptr<juce::TextButton>  viewDependencyButton;
 
 	// adsr
 	std::unique_ptr<Akasha::ADSRWidget> adsrWidgetPointer;

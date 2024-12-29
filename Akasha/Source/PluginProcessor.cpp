@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "./utilities/dependencyPath.h"
 
 AkashaAudioProcessor::AkashaAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations

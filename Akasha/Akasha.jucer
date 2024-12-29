@@ -6,6 +6,8 @@
   <MAINGROUP id="LKIRRr" name="Akasha">
     <GROUP id="{3A77558B-6FCD-E060-4D31-37E331F68564}" name="Source">
       <GROUP id="{9ADB20FE-6968-6F45-384B-6FB01FA66986}" name="utilities">
+        <FILE id="bDkbh7" name="dependencyPath.h" compile="0" resource="0"
+              file="Source/utilities/dependencyPath.h"/>
         <FILE id="JwbF7O" name="pack.h" compile="0" resource="0" file="Source/utilities/pack.h"/>
       </GROUP>
       <GROUP id="{C4B5F302-6855-4653-A89B-F7A012701DF5}" name="kernel">

@@ -28,7 +28,7 @@ namespace Akasha {
 		}
 		// editorSize
 		layout.add(std::make_unique<juce::AudioParameterInt>(
-			"editorWidth", "Editor Width", 1000, std::numeric_limits<int>::max(), 800));
+			"editorWidth", "Editor Width", 800, std::numeric_limits<int>::max(), 800));
 		layout.add(std::make_unique<juce::AudioParameterInt>(
 			"editorHeight", "Editor Height", 800, std::numeric_limits<int>::max(), 1000));
 		// Oversampling

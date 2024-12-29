@@ -4,6 +4,7 @@
 #include "../console/console.h"
 #include "../../kernel/engine/JSEngine.h"
 #include "../../utilities/pack.h"
+#include "../../utilities/dependencyPath.h"
 
 namespace Akasha {
 	inline auto streamToVector(juce::InputStream& stream) {
@@ -170,18 +171,11 @@ namespace Akasha {
 		}
 
 		std::optional<Resource> getResource(const juce::String& url) {
-			auto baseDir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory);
-			auto crackingSciencesDir = baseDir.getChildFile("CrackingSciences");
-			if (!crackingSciencesDir.exists())
-				crackingSciencesDir.createDirectory();
-			auto akashaDir = crackingSciencesDir.getChildFile("Akasha");
-			if (!akashaDir.exists())
-				akashaDir.createDirectory();
-			auto csAkashaFilesDir = akashaDir.getChildFile("cs_akasha_files");
+			auto akashaDir = getDependencyPath();
+			auto csAkashaFilesDir = akashaDir.getChildFile("editor_files");
 			if (!csAkashaFilesDir.exists())
 				csAkashaFilesDir.createDirectory();
 			auto& tempDir = csAkashaFilesDir;
-			// DBG("webpage directory: " + tempDir.getFullPathName());
 			auto htmlFile = tempDir.getChildFile("index.html");
 			if (!htmlFile.existsAsFile()) {
 				Akasha::unpackBinaryDataToTemp(BinaryData::WebEditorPacked_pack, BinaryData::WebEditorPacked_packSize, tempDir);

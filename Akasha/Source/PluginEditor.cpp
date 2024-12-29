@@ -8,6 +8,8 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "ui/MyLookAndFeel.h"
+#include "./utilities/dependencyPath.h"
 
 AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, juce::AudioProcessorValueTreeState& vts):
 	AudioProcessorEditor(&p),
@@ -19,9 +21,10 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	formulaEditorPointer(std::make_unique<Akasha::webCodeEditor>(audioProcessor.getJSEngine())),
 	macroSliderGroupPointer(std::make_unique<Akasha::Macros>(vts)),
 	codeConsolePointer(std::make_unique<Akasha::CodeConsole>()),
-	oversamplingBoxPointer(std::make_unique<Akasha::OversamplingBox>("oversampling 2^", vts, "oversampling_factor")),
+	oversamplingBoxPointer(std::make_unique<Akasha::OversamplingBox>("Oversampling 2^", vts, "oversampling_factor")),
 	saveButton(std::make_unique<juce::TextButton>("Save")),
 	loadButton(std::make_unique<juce::TextButton>("Load")),
+	viewDependencyButton(std::make_unique<juce::TextButton>("View dependency files")),
 	adsrWidgetPointer(std::make_unique<Akasha::ADSRWidget>(audioProcessor.adsrKernel))
 {
 	// juce::LookAndFeel::setDefaultLookAndFeel(&customLookAndFeel);
@@ -31,6 +34,9 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	addAndMakeVisible(loadButton.get());
 	saveButton->addListener(this);
 	loadButton->addListener(this);
+	// view dependency
+	addAndMakeVisible(viewDependencyButton.get());
+	viewDependencyButton->addListener(this);
 	// adsr
 	addAndMakeVisible(adsrWidgetPointer.get());
 	// macros
@@ -48,7 +54,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	int savedHeight = valueTreeState.getParameterAsValue("editorHeight").getValue();
 	setSize(savedWidth, savedHeight);
 	setResizable(true, true);
-	setResizeLimits(1000, 800, std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+	setResizeLimits(800, 800, std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
 	// processor
 	for (auto voice_ptr : audioProcessor.getVoices()) {
 		voice_ptr->setConsole(codeConsolePointer.get());
@@ -88,6 +94,8 @@ void AkashaAudioProcessorEditor::mouseDown(const juce::MouseEvent& event) {
 void AkashaAudioProcessorEditor::resized() {
 	juce::FlexBox mainFlexBox;
 	juce::FlexBox controlsBox;
+	juce::FlexBox controlsBoxLeft;
+	juce::FlexBox controlsBoxRight;
 	juce::FlexBox textEditorBox;
 	juce::FlexBox buttomWidgetsBox;
 
@@ -95,9 +103,15 @@ void AkashaAudioProcessorEditor::resized() {
 
 	{
 		controlsBox.flexDirection = juce::FlexBox::Direction::row;
-		controlsBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
-		controlsBox.items.add(juce::FlexItem(*saveButton).withMinWidth(50.0f));
-		controlsBox.items.add(juce::FlexItem(*loadButton).withMinWidth(50.0f));
+		controlsBox.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
+		controlsBoxLeft.flexDirection = juce::FlexBox::Direction::row;
+		controlsBoxLeft.items.add(juce::FlexItem(*saveButton).withMinWidth(50.0f));
+		controlsBoxLeft.items.add(juce::FlexItem(*loadButton).withMinWidth(50.0f));
+		controlsBoxRight.flexDirection = juce::FlexBox::Direction::row;
+		controlsBoxRight.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
+		controlsBoxRight.items.add(juce::FlexItem(*viewDependencyButton).withMinWidth(150.0f));
+		controlsBox.items.add(juce::FlexItem(controlsBoxLeft).withFlex(1.0f));
+		controlsBox.items.add(juce::FlexItem(controlsBoxRight).withMinWidth(250.0f));  
 	}
 	{
 		textEditorBox.flexDirection = juce::FlexBox::Direction::column;
@@ -110,20 +124,18 @@ void AkashaAudioProcessorEditor::resized() {
 	{	buttomWidgetsBox.flexDirection = juce::FlexBox::Direction::row;
 		buttomWidgetsBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
 		buttomWidgetsBox.items.add(juce::FlexItem(*macroSliderGroupPointer).withMinWidth(400.0f));
-		buttomWidgetsBox.items.add(juce::FlexItem(*adsrWidgetPointer).withMinWidth(340.0f));
+		buttomWidgetsBox.items.add(juce::FlexItem(*adsrWidgetPointer).withFlex(1.0f));
 		buttomWidgetsBox.items.add(juce::FlexItem(*oversamplingBoxPointer).withMinWidth(180.0f).withMaxHeight(20.0f));
 	}
 
-	mainFlexBox.items.add(juce::FlexItem(controlsBox).withMinHeight(25.0f).withMinWidth(getWidth()));
+	mainFlexBox.items.add(juce::FlexItem(controlsBox).withMinHeight(25.0f));
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));
-	mainFlexBox.items.add(juce::FlexItem(buttomWidgetsBox).withMinHeight(180.0f).withMinWidth(getWidth())); 
+	mainFlexBox.items.add(juce::FlexItem(buttomWidgetsBox).withMinHeight(180.0f)); 
 
 	mainFlexBox.performLayout(getLocalBounds().reduced(3.0f));
 
 	valueTreeState.getParameterAsValue("editorWidth").setValue(getWidth());
 	valueTreeState.getParameterAsValue("editorHeight").setValue(getHeight());
-
-	// DBG("oversampling_factor: " + juce::String(valueTreeState.getRawParameterValue("oversampling_factor")->load()));
 }
 
 juce::String AkashaAudioProcessorEditor::getCodeString() const {
@@ -181,5 +193,9 @@ void AkashaAudioProcessorEditor::buttonClicked(juce::Button* button)
 				}
 			}
 		});
+	}
+	else if (button == viewDependencyButton.get()) {
+		auto akashaDir = Akasha::getDependencyPath();
+		akashaDir.startAsProcess();
 	}
 }
