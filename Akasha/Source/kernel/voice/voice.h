@@ -50,7 +50,11 @@ namespace Akasha {
 
 		void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override {
 			if (!jsEngine.isFunctionReady()) {
+				mainWrapperParams.justPressed = true; // so it can continue when fixed.
 				return;
+			}
+			if (jsEngine.isFunctionJustReadyForVoice(voiceId)) {
+				mainWrapperParams.justPressed = true; // so it can continue when fixed.
 			}
 			if (!held) {
 				return;
@@ -66,10 +70,12 @@ namespace Akasha {
 			juce::String info;
 			if (!jsEngine.callMainWrapperFunction(mainWrapperParams, outputBuffer, startSample, mainWrapperParams.numSamples, info, voiceId)) {
 				giveInfo(info);
+				mainWrapperParams.justPressed = true; // so it can continue when fixed.
 				return;
 			}
-
-			mainWrapperParams.justPressed = false;
+			else {
+				mainWrapperParams.justPressed = false;
+			}
 		}
 
 		void pitchWheelMoved(int) override {};

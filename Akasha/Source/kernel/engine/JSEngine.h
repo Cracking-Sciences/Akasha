@@ -44,6 +44,7 @@ namespace Akasha {
 		bool loadFunction(const std::string& source_code, juce::String& info) { return true; }
 		bool callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId = 0) { return true; }
 		bool isFunctionReady() const { return true; }
+		bool isFunctionJustReadyForVoice(int voiceId) const { return false };
 	};
 }
 #endif
@@ -84,6 +85,8 @@ namespace Akasha {
 		bool loadFunction(const std::string& source_code, juce::String& info);
 		bool callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId = 0);
 		bool isFunctionReady() const;
+		// the function is ready and hasn't been called by that voice yet.
+		bool isFunctionJustReadyForVoice(int voiceId) const;
 
 	private:
 		struct Cache {
@@ -120,6 +123,7 @@ namespace Akasha {
 		const int infoArg_len = 11;
 		const int macro_len = 8;
 		bool function_ready = false;
+		std::array<bool, 16> function_just_ready_for_voice;
 		mutable std::mutex mutex;
 	};
 }

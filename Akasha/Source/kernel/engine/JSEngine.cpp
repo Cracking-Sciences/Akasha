@@ -43,6 +43,9 @@ namespace Akasha {
 	bool JSEngine::loadFunction(const std::string& source_code, juce::String& info) {
 		std::lock_guard<std::mutex> lock(mutex);
 		function_ready = false;
+		for (int i = 0; i < num_voices; i++) {
+			function_just_ready_for_voice[i] = false;
+		}
 		v8::Isolate::Scope isolate_scope(isolate);
 		v8::HandleScope handle_scope(isolate);
 
@@ -69,6 +72,9 @@ namespace Akasha {
 		cache.globalObject.Reset(isolate, context.Get(isolate)->Global());
 
 		function_ready = true;
+		for (int i = 0; i < num_voices; i++) {
+			function_just_ready_for_voice[i] = true;
+		}
 		return true;
 	}
 
@@ -130,11 +136,17 @@ namespace Akasha {
 			// }
 		}
 		function_ready = true;
+		function_just_ready_for_voice[voiceId] = false;
 		return true;
 	}
 
+
 	bool JSEngine::isFunctionReady() const {
 		return function_ready;
+	}
+
+	bool JSEngine::isFunctionJustReadyForVoice(int voiceId) const {
+		return function_just_ready_for_voice[voiceId];
 	}
 
 	void JSEngine::prepareMainWrapperArguments(const JSMainWrapperParams& params, int voiceId) {
