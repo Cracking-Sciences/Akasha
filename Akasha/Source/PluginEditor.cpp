@@ -25,7 +25,8 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	saveButton(std::make_unique<juce::TextButton>("Save")),
 	loadButton(std::make_unique<juce::TextButton>("Load")),
 	viewDependencyButton(std::make_unique<juce::TextButton>("View dependency files")),
-	adsrWidgetPointer(std::make_unique<Akasha::ADSRWidget>(audioProcessor.adsrKernel))
+	adsrWidgetPointer(std::make_unique<Akasha::ADSRWidget>(audioProcessor.adsrKernel)),
+	creditLabelPointer(std::make_unique<juce::TextEditor>("credit"))
 {
 	// juce::LookAndFeel::setDefaultLookAndFeel(&customLookAndFeel);
 	setLookAndFeel(&customLookAndFeel);
@@ -39,6 +40,13 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	viewDependencyButton->addListener(this);
 	// adsr
 	addAndMakeVisible(adsrWidgetPointer.get());
+	// credit
+	creditLabelPointer->setReadOnly(true);
+	creditLabelPointer->setMultiLine(true, true);
+	creditLabelPointer->setColour(juce::TextEditor::textColourId, juce::Colour(0xFFC53939));
+	creditLabelPointer->setColour(juce::TextEditor::backgroundColourId, juce::Colour(0x00000000));
+	creditLabelPointer->setText("Akasha by Cracking Sciences v0.2.0", false);
+	addAndMakeVisible(creditLabelPointer.get());
 	// macros
 	addAndMakeVisible(macroSliderGroupPointer.get());
 	// console.
@@ -98,18 +106,22 @@ void AkashaAudioProcessorEditor::resized() {
 	juce::FlexBox controlsBoxRight;
 	juce::FlexBox textEditorBox;
 	juce::FlexBox buttomWidgetsBox;
+	juce::FlexBox buttomEidgetsMiscBox;
 
 	mainFlexBox.flexDirection = juce::FlexBox::Direction::column;
-
 	{
 		controlsBox.flexDirection = juce::FlexBox::Direction::row;
 		controlsBox.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
-		controlsBoxLeft.flexDirection = juce::FlexBox::Direction::row;
-		controlsBoxLeft.items.add(juce::FlexItem(*saveButton).withMinWidth(50.0f));
-		controlsBoxLeft.items.add(juce::FlexItem(*loadButton).withMinWidth(50.0f));
-		controlsBoxRight.flexDirection = juce::FlexBox::Direction::row;
-		controlsBoxRight.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
-		controlsBoxRight.items.add(juce::FlexItem(*viewDependencyButton).withMinWidth(150.0f));
+		{
+			controlsBoxLeft.flexDirection = juce::FlexBox::Direction::row;
+			controlsBoxLeft.items.add(juce::FlexItem(*saveButton).withMinWidth(50.0f));
+			controlsBoxLeft.items.add(juce::FlexItem(*loadButton).withMinWidth(50.0f));
+		}
+		{
+			controlsBoxRight.flexDirection = juce::FlexBox::Direction::row;
+			controlsBoxRight.justifyContent = juce::FlexBox::JustifyContent::flexEnd;
+			controlsBoxRight.items.add(juce::FlexItem(*viewDependencyButton).withMinWidth(150.0f));
+		}
 		controlsBox.items.add(juce::FlexItem(controlsBoxLeft).withFlex(1.0f));
 		controlsBox.items.add(juce::FlexItem(controlsBoxRight).withMinWidth(250.0f));  
 	}
@@ -125,9 +137,14 @@ void AkashaAudioProcessorEditor::resized() {
 		buttomWidgetsBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
 		buttomWidgetsBox.items.add(juce::FlexItem(*macroSliderGroupPointer).withMinWidth(400.0f));
 		buttomWidgetsBox.items.add(juce::FlexItem(*adsrWidgetPointer).withFlex(1.0f));
-		buttomWidgetsBox.items.add(juce::FlexItem(*oversamplingBoxPointer).withMinWidth(180.0f).withMaxHeight(20.0f));
+		{
+			buttomEidgetsMiscBox.flexDirection = juce::FlexBox::Direction::column;
+			buttomEidgetsMiscBox.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+			buttomEidgetsMiscBox.items.add(juce::FlexItem(*oversamplingBoxPointer).withMinHeight(20.0f));
+			buttomEidgetsMiscBox.items.add(juce::FlexItem(*creditLabelPointer).withMinHeight(40.0f));
+		}
+		buttomWidgetsBox.items.add(juce::FlexItem(buttomEidgetsMiscBox).withMinWidth(180.0f));
 	}
-
 	mainFlexBox.items.add(juce::FlexItem(controlsBox).withMinHeight(25.0f));
 	mainFlexBox.items.add(juce::FlexItem(textEditorBox).withFlex(1.0f));
 	mainFlexBox.items.add(juce::FlexItem(buttomWidgetsBox).withMinHeight(180.0f)); 

@@ -63,6 +63,8 @@ private:
 
 	// adsr
 	std::unique_ptr<Akasha::ADSRWidget> adsrWidgetPointer;
+	// credit
+	std::unique_ptr<juce::TextEditor> creditLabelPointer;
 
 	// custom look and feel.
 	Akasha::CustomLookAndFeel customLookAndFeel;

@@ -2,8 +2,8 @@
 
 The ultimate answer to audio tools.
 
-![snapshot](/Assets/snapshot_v0.1.0.png)
-**v0.1.0**
+![snapshot](/Assets/snapshot_v0.2.0.png)
+**v0.2.0**
 ## Overview
 
 Focus on the dsp kernel to design your sounds (or patterns, or even tracks) directly in your DAW. Write down your idea in the handy javascrpit.
@@ -28,10 +28,10 @@ The entry function of `Voice` is `main`, called for each sample point whenever a
 |m0~m7|Macro knobs' values in float|
 |tempo|Current tempo in bpm provided by your DAW |
 |beat|Current beat (the xxx th beat in float) provided by your DAW |
-|sampleRate|Sample Rate in float|
-|bufferLen|Advanced feature. Ignore it if you don't know.|
+|numSamples|Advanced feature. Ignore it if you don't know.|
 |bufferPos|Advanced feature. Ignore it if you don't know.|
 |time|The time elapsed since your have pressed down the note|
+|delta|The time elapsed since last main call (normally = 1/sampleRate)|
 |note|The midi ID of the note you just pressed. 0~127|
 |velocity|The velocity of the note you just pressed. 0.0~1.0 in float|
 |justPressed|Whether this main call is the trigger frame of the note. 0 or 1|
@@ -42,20 +42,26 @@ The entry function of `Voice` is `main`, called for each sample point whenever a
 
 `main` is called for each sample point at the sample rate. Other functions, classes, and global variables stay there, memorizing their states.
 
+**Hard-coded global constant:**
+`sampleRate`: current sample rate. If the sample rate changes, the code will be recompiled.
+
+
 Check `Presets/tutorials/*` for more tricks.
 
 ### Interact
-
 
 To compile your code, defocus the editor.
 Once your code is compiled, up to 16 notes can be pressed simutaneously, each with its own `Voice` instance.
 
 Macro Knobs can be automatically controlled by your DAW.
 
+Please note that all the numbers in the code can be adjusted by right-clicking 
+and dragging the mouse. The position you click to determines the precision of the change.
+
 ### TODO
 
 - 🔥Drawable LFO functions and their UI. Can be used as oscilator shape, modulation source, etc. 
-- 🔥Support note-off sound by adsr envelope.
+- (DONE!✅)🔥Support note-off sound by the adsr envelope.
 - 🔥MPE.
 - 🔥Legato and glide.
 - 🤓Inspector functions and their UI to track variables or arrays. 
