@@ -18,7 +18,7 @@ namespace Akasha {
 				("macro" + juce::String(i),
 					"macro" + juce::String(i),
 					juce::Range<float>(0.f, 1.f), 
-					0.0f,
+					i == 0? 0.5f : 0.0f,
 					juce::String(), 
 					juce::AudioProcessorParameter::genericParameter,
 					[](float value, int) { return juce::String(value, 3); },
@@ -34,14 +34,14 @@ namespace Akasha {
 		// Oversampling
 		layout.add(std::make_unique<juce::AudioParameterInt>("oversampling_factor", "oversampling_factor", 0, 3, 1));
 		// main ADSR
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack", "adsr_attack", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.01f));
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack_curvature", "adsr_attack_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), -15.0f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack", "adsr_attack", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.02f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack_curvature", "adsr_attack_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), -3.0f));
 		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_hold", "adsr_hold", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.0f));
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_decay", "adsr_decay", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.5f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_decay", "adsr_decay", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.1f));
 		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_decay_curvature", "adsr_decay_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), 0.0f));
 		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_sustain", "adsr_sustain", juce::NormalisableRange<float>(0.0f, 1.f, 0.001f), 1.0f));
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release", "adsr_release", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.01f));
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release_curvature", "adsr_release_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), -15.0f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release", "adsr_release", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.02f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release_curvature", "adsr_release_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), -3.0f));
 		return layout;
 	}
 }

@@ -82,14 +82,17 @@ namespace Akasha {
 		}
 		else {
 			float timeSinceRelease = timeNow - timeAtRelease;
-			if (timeSinceRelease > (*curves)[Release].curveLength) {
+			if (timeSinceRelease >= (*curves)[Release].curveLength) {
 				v = 0.0f;
 				stop = true;
 			}
 			else {
 				float x = sustainEnd + timeSinceRelease;
 				float releaseV = getPoint(x);
-				float ratio = releaseV / (*curves)[Decay].endingValue;
+				float ratio = 0.0;
+				if ((*curves)[Decay].endingValue > 0) {
+					ratio = releaseV / (*curves)[Decay].endingValue;
+				}
 				v = pressedV * ratio;
 			}
 		}
@@ -236,19 +239,37 @@ namespace Akasha {
 			intervalHint = 1.0f;
 		}
 		float nextHintTime = intervalHint;
-		g.setColour(outlineColour.withAlpha(0.5f));
+		int stageNodeDrawn = 1;
 		for (int x = 0; x < width; x++) {
 			float time = (float)x / (float)width * totalLength;
 			float fy = adsrKernel.getPoint(time);
 			int y = height * (1.0f - fy);
 			p.lineTo(x, y);
+			// hint line
 			if (time >= nextHintTime) {
+				g.setColour(outlineColour.withAlpha(0.3f));
 				g.drawLine(x, 0, x, height, 1.0f);
 				juce::String timeLabel = juce::String(nextHintTime, 1);
 				int textX = x + 5;
 				int textY = height - 15;
 				g.drawText(timeLabel, textX, textY, 50, 15, juce::Justification::left);
 				nextHintTime += intervalHint;
+			}
+			// stage line
+			if (stageNodeDrawn == 1 && time >= adsrKernel.getTarget(0) ) {
+				stageNodeDrawn = 2;
+				g.setColour(outlineColour);
+				g.drawLine(x, 0, x, height, 1.0f);
+			}
+			if (stageNodeDrawn == 2 && time >= adsrKernel.getTarget(0) + adsrKernel.getTarget(2)) {
+				stageNodeDrawn = 3;
+				g.setColour(outlineColour);
+				g.drawLine(x, 0, x, height, 1.0f);
+			}
+			if (stageNodeDrawn == 3 && time >= adsrKernel.getTarget(0) + adsrKernel.getTarget(2) + adsrKernel.getTarget(3)) {
+				stageNodeDrawn = 4;
+				g.setColour(outlineColour);
+				g.drawLine(x, height * (1-adsrKernel.getTarget(5)), x, height, 1.0f);
 			}
 		}
 		g.setColour(outlineColour);
