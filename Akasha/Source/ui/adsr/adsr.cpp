@@ -102,6 +102,10 @@ namespace Akasha {
 		}
 		float fpoint = x / totalLength * numPoints;
 		if (fpoint >= numPoints) {
+			// if release == 0, we should take care of this.
+			if ((*curves)[Release].curveLength <= 0.0f) {
+				return targets[5];
+			}
 			return 0.0f;
 		}
 		if (fpoint < 0.0f) {

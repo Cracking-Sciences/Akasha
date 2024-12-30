@@ -22,7 +22,8 @@ namespace Akasha {
 		std::array<std::atomic<float>*, 8> macros;
 		int numSamples;
 		int numChannels;
-		double sampleRate;
+		// double sampleRate; sampleRate is global now.
+		double time; // give the precise time buffer-wise. Automatically fix any time drift.
 		double tempo;
 		double beat;
 		bool justPressed;
@@ -44,7 +45,9 @@ namespace Akasha {
 		bool loadFunction(const std::string& source_code, juce::String& info) { return true; }
 		bool callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId = 0) { return true; }
 		bool isFunctionReady() const { return true; }
-		bool isFunctionJustReadyForVoice(int voiceId) const { return false };
+		bool isFunctionJustReadyForVoice(int voiceId) const { return false; }
+		void setSampleRate(float sr) { ; }
+		float getSampleRate() const { return 44100.0; }
 	};
 }
 #endif
@@ -87,6 +90,8 @@ namespace Akasha {
 		bool isFunctionReady() const;
 		// the function is ready and hasn't been called by that voice yet.
 		bool isFunctionJustReadyForVoice(int voiceId) const;
+		void setSampleRate(float sr);
+		float getSampleRate() const;
 
 	private:
 		struct Cache {
@@ -125,6 +130,8 @@ namespace Akasha {
 		bool function_ready = false;
 		std::array<bool, 16> function_just_ready_for_voice;
 		mutable std::mutex mutex;
+
+		float sample_rate;
 	};
 }
 #endif

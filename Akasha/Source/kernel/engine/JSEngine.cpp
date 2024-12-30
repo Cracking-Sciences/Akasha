@@ -52,7 +52,14 @@ namespace Akasha {
 		auto& context = cache.context;
 		context.Reset(isolate, v8::Context::New(isolate));
 		v8::Context::Scope context_scope(context.Get(isolate));
-		// user's code and main
+		// set sample_rate as a global variable!!!!
+		v8::Local<v8::Object> global = context.Get(isolate)->Global();
+		global->Set(
+			context.Get(isolate),
+			v8::String::NewFromUtf8(isolate, "sampleRate").ToLocalChecked(),
+			v8::Number::New(isolate, sample_rate)
+		).Check();
+		// user's code and voice->main
 		if (!compileAndRunScript(source_code, context.Get(isolate), info)) {
 			return false;
 		}
@@ -129,7 +136,7 @@ namespace Akasha {
 			// Get the raw float array from the backing store
 			v8::Local<v8::ArrayBuffer> arrayBuffer = channelBuffer.Get(isolate);
 			float* channelData = static_cast<float*>(arrayBuffer->GetBackingStore()->Data());
-			outputBuffer.addFrom(channel, startSample, channelData, numSamples, 1.0f);
+			outputBuffer.copyFrom(channel, startSample, channelData, numSamples, 1.0f);
 			// auto* outputChannelData = outputBuffer.getWritePointer(channel, startSample);
 			// for (int sample = 0; sample < numSamples; ++sample) {
 			// 	outputChannelData[sample] += channelData[sample];
@@ -147,6 +154,14 @@ namespace Akasha {
 
 	bool JSEngine::isFunctionJustReadyForVoice(int voiceId) const {
 		return function_just_ready_for_voice[voiceId];
+	}
+
+	void JSEngine::setSampleRate(float sr) {
+		sample_rate = sr;
+	}
+
+	float JSEngine::getSampleRate() const {
+		return sample_rate;
 	}
 
 	void JSEngine::prepareMainWrapperArguments(const JSMainWrapperParams& params, int voiceId) {
@@ -207,7 +222,7 @@ namespace Akasha {
 		}
 		bufferData2[0] = static_cast<double>(params.numSamples);
 		bufferData2[1] = static_cast<double>(params.numChannels);
-		bufferData2[2] = static_cast<double>(params.sampleRate);
+		bufferData2[2] = static_cast<double>(params.time);
 		bufferData2[3] = static_cast<double>(params.tempo);
 		bufferData2[4] = static_cast<double>(params.beat);
 		bufferData2[5] = static_cast<double>(params.justPressed ? 1.0 : 0.0);

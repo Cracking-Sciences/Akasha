@@ -28,20 +28,20 @@ namespace Akasha {
 		}
 		// editorSize
 		layout.add(std::make_unique<juce::AudioParameterInt>(
-			"editorWidth", "Editor Width", 800, std::numeric_limits<int>::max(), 800));
+			"editorWidth", "Editor Width", 900, std::numeric_limits<int>::max(), 800));
 		layout.add(std::make_unique<juce::AudioParameterInt>(
 			"editorHeight", "Editor Height", 800, std::numeric_limits<int>::max(), 1000));
 		// Oversampling
 		layout.add(std::make_unique<juce::AudioParameterInt>("oversampling_factor", "oversampling_factor", 0, 3, 1));
 		// main ADSR
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack", "adsr_attack", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.1f));
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack_curvature", "adsr_attack_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), 0.0f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack", "adsr_attack", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.01f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_attack_curvature", "adsr_attack_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), -15.0f));
 		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_hold", "adsr_hold", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.0f));
 		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_decay", "adsr_decay", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.5f));
 		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_decay_curvature", "adsr_decay_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), 0.0f));
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_sustain", "adsr_sustain", juce::NormalisableRange<float>(0.0f, 1.f, 0.001f), 0.5f));
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release", "adsr_release", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.1f));
-		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release_curvature", "adsr_release_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), 0.0f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_sustain", "adsr_sustain", juce::NormalisableRange<float>(0.0f, 1.f, 0.001f), 1.0f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release", "adsr_release", juce::NormalisableRange<float>(0.0f, 10.f, 0.001f), 0.01f));
+		layout.add(std::make_unique<juce::AudioParameterFloat>("adsr_release_curvature", "adsr_release_curvature", juce::NormalisableRange<float>(-20.f, 20.f, 0.001f), -15.0f));
 		return layout;
 	}
 }
@@ -99,10 +99,9 @@ private:
 	double beat = 0.;
 	uint8_t currentOversamplingFactor = 0;
 	std::array<std::atomic<float>*, 8> macros;
-	juce::Synthesiser synth;
+	Akasha::AkashaSynthesiser synth;
 	std::vector<Akasha::AkashaVoice*> voices;
 	juce::AudioProcessorValueTreeState parameters;
-	
 	std::unique_ptr<juce::dsp::Oversampling<float>> oversampler;
 	void checkOversampler();
 };

@@ -18,12 +18,16 @@ function createMainWrapper() {
         mainWrapper: function (args1, args2, buffer) {
             var currentMacros = args1;
             let [
-                numSamples, numChannels, sampleRate, tempo, beat, justPressed, voiceId, note, velocity
+                numSamples, numChannels, time, tempo, beat, justPressed, voiceId, note, velocity
             ] = args2;
 
             const voiceIndex = voiceId % voices.length;
             const voice = voices[voiceIndex];
-            let time = times[voiceIndex];
+            let liveDelta = time - times[voiceId];
+            if (liveDelta < 0) {
+                liveDelta = 0;
+            }
+            times[voiceIndex] = time;
             let liveBeat = liveBeats[voiceIndex];
             let prevMacros = prevMacrosArray[voiceIndex];
 
@@ -33,16 +37,11 @@ function createMainWrapper() {
                 prevMacrosArray[voiceIndex] = prevMacros;
             }
 
-            if (justPressed) {
-                time = 0.0;
-            }
-
             liveBeat = beat;
 
             // Precompute constant factor
             const tempoFactor = tempo / 60.0 / sampleRate;
-            const delta = 1.0 / sampleRate;
-
+            const normalDelta = 1.0 / sampleRate;
 
             for (var i = 0; i < numSamples; i++) {
                 // Precompute interpolation factor
@@ -54,7 +53,6 @@ function createMainWrapper() {
                 }
 
                 // Call main and handle the result
-                
                 let result = voice.main({
                     m0: interpolatedMacros[0],
                     m1: interpolatedMacros[1],
@@ -66,10 +64,10 @@ function createMainWrapper() {
                     m7: interpolatedMacros[7],
                     tempo,
                     beat: liveBeat,
-                    sampleRate,
                     numSamples,
                     bufferPos: i,
                     time,
+                    delta: liveDelta,
                     note,
                     velocity,
                     justPressed
@@ -88,10 +86,12 @@ function createMainWrapper() {
                 }
 
                 // Update time and beat
-                time += delta;
                 liveBeat += tempoFactor;
                 justPressed = false;
+                liveDelta = normalDelta;
+                time += normalDelta;
             }
+            time -= normalDelta; // the last delta should be get from the next time
 
             // Update previous macros
             for (var j = 0; j < currentMacros.length; j++) {
@@ -108,6 +108,9 @@ function createMainWrapper() {
 // Create an instance of mainWrapper with its own private state
 var mainWrapperInstance = createMainWrapper();
 var mainWrapper = mainWrapperInstance.mainWrapper;
+
+
+
 
 
 )";

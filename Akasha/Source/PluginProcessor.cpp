@@ -22,7 +22,7 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 
 	voices.resize(16);
 	for (auto i = 0; i < 16; i++) {
-		voices[i] = new Akasha::AkashaVoice(jsEngine, i, macros);
+		voices[i] = new Akasha::AkashaVoice(jsEngine, adsrKernel, i, macros);
 		synth.addVoice(voices[i]);
 	}
 	synth.addSound(new Akasha::AkashaSound());
@@ -142,6 +142,13 @@ void AkashaAudioProcessor::checkOversampler() {
 		constexpr auto filterType = juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR;
 		oversampler = std::make_unique<juce::dsp::Oversampling<float>>(2, oversampling_factor, filterType);
 		oversampler->initProcessing(getBlockSize());
+		// engine re-compile and set sampleRate as a global variable.
+		jsEngine.setSampleRate(getSampleRate() * std::pow(2, oversampling_factor));
+		if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
+			savedCode = editor->getCodeString();
+		}
+		juce::String dummy;
+		jsEngine.loadFunction(savedCode.toStdString(), dummy);
 	}
 }
 
