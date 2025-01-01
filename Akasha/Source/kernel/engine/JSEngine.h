@@ -43,7 +43,7 @@ namespace Akasha {
 		JSEngine() {}
 		~JSEngine() {}
 		bool loadFunction(const std::string& source_code, juce::String& info) { return true; }
-		bool callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId = 0) { return true; }
+		bool callMainWrapperFunction(const JSMainWrapperParams& args, int startSample, int numSamples, juce::String& info, int voiceId,  std::vector<float*>& channelDataList) { return true; }
 		bool isFunctionReady() const { return true; }
 		bool isFunctionJustReadyForVoice(int voiceId) const { return false; }
 		void setSampleRate(float sr) { ; }
@@ -86,7 +86,7 @@ namespace Akasha {
 		~JSEngine();
 
 		bool loadFunction(const std::string& source_code, juce::String& info);
-		bool callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId = 0);
+		bool callMainWrapperFunction(const JSMainWrapperParams& args, int startSample, int numSamples, juce::String& info, int voiceId,  std::vector<float*>& channelDataList);
 		bool isFunctionReady() const;
 		// the function is ready and hasn't been called by that voice yet.
 		bool isFunctionJustReadyForVoice(int voiceId) const;

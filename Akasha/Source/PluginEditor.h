@@ -69,5 +69,6 @@ private:
 
 	// custom look and feel.
 	Akasha::CustomLookAndFeel customLookAndFeel;
+	std::unique_ptr<juce::PropertiesFile> propertiesFile;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AkashaAudioProcessorEditor)
 };

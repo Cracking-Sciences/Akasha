@@ -86,7 +86,7 @@ namespace Akasha {
 		return true;
 	}
 
-	bool JSEngine::callMainWrapperFunction(const JSMainWrapperParams& args, juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples, juce::String& info, int voiceId) {
+	bool JSEngine::callMainWrapperFunction(const JSMainWrapperParams& args, int startSample, int numSamples, juce::String& info, int voiceId, std::vector<float*>& channelDataList) {
 		std::lock_guard<std::mutex> lock(mutex);
 		voiceId = voiceId % num_voices;
 		v8::Global<v8::Context>& cached_context = cache.context;
@@ -121,30 +121,13 @@ namespace Akasha {
 			return false;
 		}
 
-		/*
-		// fill outputBuffer
-		if (outputBuffer.getNumChannels() < args.numChannels || outputBuffer.getNumSamples() < startSample + numSamples) {
-			info = juce::String("Output buffer size is insufficient.\n");
-			function_ready = false;
-			return false;
-		}
-		*/
-
+		channelDataList.resize(args.numChannels);
 		for (int channel = 0; channel < args.numChannels; ++channel) {
 			auto& channelBuffer = cache.channelBuffers[channel];
-			if (channelBuffer.IsEmpty()) {
-				info = juce::String("Channel buffer is empty.\n");
-				function_ready = false;
-				return false;
-			}
 			// Get the raw float array from the backing store
 			v8::Local<v8::ArrayBuffer> arrayBuffer = channelBuffer.Get(isolate);
 			float* channelData = static_cast<float*>(arrayBuffer->GetBackingStore()->Data());
-			outputBuffer.copyFrom(channel, startSample, channelData, numSamples, 1.0f);
-			// auto* outputChannelData = outputBuffer.getWritePointer(channel, startSample);
-			// for (int sample = 0; sample < numSamples; ++sample) {
-			// 	outputChannelData[sample] += channelData[sample];
-			// }
+			channelDataList[channel] = channelData;
 		}
 		function_ready = true;
 		function_just_ready_for_voice[voiceId] = false;

@@ -48,7 +48,6 @@ namespace Akasha {
 			for (size_t i = 0; i < 8; i++) {
 				mainWrapperParams.macros[i] = new std::atomic<float>(0);
 			}
-			localBuffer.setSize(2, 512);
 		}
 
 		~AkashaVoice() {
@@ -108,11 +107,10 @@ namespace Akasha {
 				mainWrapperParams.macros[macro_index]->store(*recv_macros[macro_index]);
 			}
 
-			localBuffer.setSize(outputBuffer.getNumChannels(), numSamples, false, false, true);
-
 			// process the whole buffer
 			juce::String info;
-			if (!jsEngine.callMainWrapperFunction(mainWrapperParams, localBuffer, 0, mainWrapperParams.numSamples, info, voiceId)) {
+			channelDataList.resize(outputBuffer.getNumChannels());
+			if (!jsEngine.callMainWrapperFunction(mainWrapperParams, 0, mainWrapperParams.numSamples, info, voiceId, channelDataList)) {
 				giveInfo(info);
 				time += numSamples / sampleRate;
 				return;
@@ -128,18 +126,16 @@ namespace Akasha {
 				float timeNow = time + sample / sampleRate;
 				adsrKernel.getValue(timeNow, noteReleased, timeAtRelease, v, stop);
 				for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel) {
-					float* localBufferPointer = localBuffer.getWritePointer(channel);
-					localBufferPointer[sample] *= v;
+					channelDataList[channel][sample] *= v;
 				}
 			}
 			for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel) {
-				outputBuffer.addFrom(channel, startSample, localBuffer, channel, 0, numSamples);
+				outputBuffer.addFrom(channel, startSample, channelDataList[channel], numSamples);
 			}
 			if (stop) {
 				clearCurrentNote();
 				inNoteLife = false;
 			}
-
 			// Increment time by the number of samples
 			time += numSamples / sampleRate;
 		}
@@ -169,7 +165,7 @@ namespace Akasha {
 		JSMainWrapperParams mainWrapperParams;
 		JSEngine& jsEngine;
 		Akasha::ADSRKernel& adsrKernel;
-		juce::AudioBuffer<float> localBuffer;
+		std::vector<float*> channelDataList; // the buffer result from the jsEngine
 		juce::TextEditor* code_console = nullptr;
 		int voiceId;
 		bool inNoteLife = false;

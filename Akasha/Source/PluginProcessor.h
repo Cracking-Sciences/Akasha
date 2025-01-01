@@ -26,11 +26,6 @@ namespace Akasha {
 				)
 			);
 		}
-		// editorSize
-		layout.add(std::make_unique<juce::AudioParameterInt>(
-			"editorWidth", "Editor Width", 900, std::numeric_limits<int>::max(), 800));
-		layout.add(std::make_unique<juce::AudioParameterInt>(
-			"editorHeight", "Editor Height", 800, std::numeric_limits<int>::max(), 1000));
 		// Oversampling
 		layout.add(std::make_unique<juce::AudioParameterInt>("oversampling_factor", "oversampling_factor", 0, 3, 1));
 		// main ADSR

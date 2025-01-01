@@ -401,10 +401,15 @@ namespace Akasha {
 		releaseSlider.getSlider().setRange(0.0, 10.0, 0.001);
 
 		attackSlider.getLabel().setEditable(false);
+		attackSlider.getLabel().setMinimumHorizontalScale(1.0f);
 		holdSlider.getLabel().setEditable(false);
+		holdSlider.getLabel().setMinimumHorizontalScale(1.0f);
 		decaySlider.getLabel().setEditable(false);
+		decaySlider.getLabel().setMinimumHorizontalScale(1.0f);
 		sustainSlider.getLabel().setEditable(false);
+		sustainSlider.getLabel().setMinimumHorizontalScale(1.0f);
 		releaseSlider.getLabel().setEditable(false);
+		releaseSlider.getLabel().setMinimumHorizontalScale(1.0f);
 
 		attackSlider.getSlider().setSkewFactor(0.25);
 		holdSlider.getSlider().setSkewFactor(0.25);
