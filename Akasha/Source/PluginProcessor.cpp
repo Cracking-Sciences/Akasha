@@ -32,8 +32,7 @@ AkashaAudioProcessor::AkashaAudioProcessor()
 		savedMacroText[i] = "m" + juce::String(i);
 	}
 
-	juce::String dummy;
-	jsEngine.loadFunction(savedCode.toStdString(), dummy);
+	jsEngine.loadFunction(savedCode.toStdString(), consoleText);
 
 	adsrKernel.setVTS(&parameters, "adsr_attack", 0);
 	adsrKernel.setVTS(&parameters, "adsr_attack_curvature", 1);
@@ -147,8 +146,7 @@ void AkashaAudioProcessor::checkOversampler() {
 		if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
 			savedCode = editor->getCodeString();
 		}
-		juce::String dummy;
-		jsEngine.loadFunction(savedCode.toStdString(), dummy);
+		jsEngine.loadFunction(savedCode.toStdString(), consoleText);
 	}
 }
 
@@ -236,15 +234,14 @@ void AkashaAudioProcessor::setStateInformation(const void* data, int sizeInBytes
 			}
 		}
 	}
+	{
+		jsEngine.loadFunction(savedCode.toStdString(), consoleText);
+	}
 	if (auto* editor = dynamic_cast<AkashaAudioProcessorEditor*>(getActiveEditor())) {
 		editor->setCodeString(savedCode);
+		editor->setConsoleString(consoleText);
 		editor->setMacroText(savedMacroText);
-		editor->compile();
 		editor->repaint();
-	}
-	else {
-		juce::String dummy;
-		jsEngine.loadFunction(savedCode.toStdString(), dummy);
 	}
 }
 

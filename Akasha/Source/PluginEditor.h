@@ -32,6 +32,7 @@ public:
 	juce::String getCodeString() const;
 	void setCodeString(const juce::String& newText); 
 	void setMacroText(const std::array<juce::String, 8>& newText);
+	void setConsoleString(const juce::String& newText);
 	const std::array<juce::String, 8> getMacroText();
 	void compile();
 

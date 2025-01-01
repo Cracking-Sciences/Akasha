@@ -66,7 +66,7 @@ namespace Akasha {
 		std::vector<juce::String> idToUseVector;
 	};
 
-	class ADSRWindow : public juce::Component, private juce::ChangeListener, public juce::ChangeBroadcaster {
+	class ADSRWindow : public juce::Component {
 	public:
 		ADSRWindow(ADSRKernel& adsrKernel);
 		~ADSRWindow();
@@ -91,7 +91,7 @@ namespace Akasha {
 		ADSRKernel::Stage currentHoldStage = ADSRKernel::Stage::Attack;
 		float currentCurvature = 0.0f;
 		ActionType actionType = None;
-		void changeListenerCallback(ChangeBroadcaster* source) override;
+		void changeUpdate();
 		void setCurvature(float curvature, ADSRKernel::Stage stage);
 		ADSRKernel::Stage getSegmentIndex(int sampleIndex);
 	};

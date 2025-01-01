@@ -152,19 +152,15 @@ namespace Akasha {
 		adsrKernel(adsrKernel)
 	{
 		setInterceptsMouseClicks(true, true);
-		addChangeListener(this);
 	}
 
 	ADSRWindow::~ADSRWindow() {
-		removeChangeListener(this);
 	}
 
 
-	void ADSRWindow::changeListenerCallback(juce::ChangeBroadcaster* source) {
-		if (source == this) {
-			adsrKernel.calcPoints();
-			repaint();
-		}
+	void ADSRWindow::changeUpdate() {
+		adsrKernel.calcPoints();
+		repaint();
 	}
 
 	void ADSRWindow::mouseDown(const juce::MouseEvent& event) {
@@ -185,7 +181,7 @@ namespace Akasha {
 		if (event.getNumberOfClicks() > 1) {
 			actionType = RemoveCurvature;
 			setCurvature(0.0f, currentHoldStage);
-			sendChangeMessage();
+			changeUpdate();
 		}
 		else {
 			actionType = DragCurvature;
@@ -209,7 +205,7 @@ namespace Akasha {
 			if (curvature < adsrKernel.minCurvature) curvature = adsrKernel.minCurvature;
 			if (curvature > adsrKernel.maxCurvature) curvature = adsrKernel.maxCurvature;
 			setCurvature(curvature, currentHoldStage);
-			sendChangeMessage();
+			changeUpdate();
 			break;
 		default:
 			return;
@@ -222,7 +218,6 @@ namespace Akasha {
 		juce::Rectangle<int> bounds = getLocalBounds();
 		g.drawLine(bounds.getRight() - 1, bounds.getY(), bounds.getRight() - 1, bounds.getBottom(), 1.0f); 
 		g.drawLine(bounds.getX(), bounds.getBottom() - 1, bounds.getRight(), bounds.getBottom() - 1, 1.0f); 
-
 
 		int height = getHeight();
 		int width = getWidth();
@@ -307,7 +302,7 @@ namespace Akasha {
 			v = 0.0;
 		}
 		adsrKernel.setTarget(0, v);
-		sendChangeMessage();
+		changeUpdate();
 	}
 
 	void ADSRWindow::setHold(float v) {
@@ -315,7 +310,7 @@ namespace Akasha {
 			v = 0.0;
 		}
 		adsrKernel.setTarget(2, v);
-		sendChangeMessage();
+		changeUpdate();
 	}
 
 	void ADSRWindow::setDecay(float v) {
@@ -323,7 +318,7 @@ namespace Akasha {
 			v = 0.0;
 		}
 		adsrKernel.setTarget(3, v);
-		sendChangeMessage();
+		changeUpdate();
 	}
 
 	void ADSRWindow::setSustain(float v) {
@@ -334,7 +329,7 @@ namespace Akasha {
 			v = 0.0f;
 		}
 		adsrKernel.setTarget(5, v);
-		sendChangeMessage();
+		changeUpdate();
 	}
 
 	void ADSRWindow::setRelease(float v) {
@@ -342,7 +337,7 @@ namespace Akasha {
 			v = 0.0;
 		}
 		adsrKernel.setTarget(6, v);
-		sendChangeMessage();
+		changeUpdate();
 	}
 
 
@@ -450,11 +445,11 @@ namespace Akasha {
 		// when a new preset is loaded, the sliders should be updated.
 		// The processor will call editor to repaint everything.
 		// So this will work.
-		attackSlider.getSlider().setValue(adsrKernel.getTarget(0));
-		holdSlider.getSlider().setValue(adsrKernel.getTarget(2));
-		decaySlider.getSlider().setValue(adsrKernel.getTarget(3));
-		sustainSlider.getSlider().setValue(adsrKernel.getTarget(5));
-		releaseSlider.getSlider().setValue(adsrKernel.getTarget(6));
+		attackSlider.getSlider().setValue(adsrKernel.getTarget(0), juce::dontSendNotification);
+		holdSlider.getSlider().setValue(adsrKernel.getTarget(2), juce::dontSendNotification);
+		decaySlider.getSlider().setValue(adsrKernel.getTarget(3), juce::dontSendNotification);
+		sustainSlider.getSlider().setValue(adsrKernel.getTarget(5), juce::dontSendNotification);
+		releaseSlider.getSlider().setValue(adsrKernel.getTarget(6), juce::dontSendNotification);
 	}
 
 	void ADSRWidget::resized() {

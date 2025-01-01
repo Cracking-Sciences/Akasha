@@ -50,6 +50,7 @@ AkashaAudioProcessorEditor::AkashaAudioProcessorEditor(AkashaAudioProcessor& p, 
 	// macros
 	addAndMakeVisible(macroSliderGroupPointer.get());
 	// console.
+	codeConsolePointer->setText(audioProcessor.consoleText);
 	addAndMakeVisible(codeConsolePointer.get());
 	// code editor.
 	formulaEditorPointer->setConsole(codeConsolePointer.get());
@@ -83,6 +84,7 @@ AkashaAudioProcessorEditor::~AkashaAudioProcessorEditor() {
 	loadButton->removeListener(this);
 	audioProcessor.savedCode = getCodeString();
 	audioProcessor.savedMacroText = getMacroText();
+	audioProcessor.consoleText = codeConsolePointer->getText();
 	setLookAndFeel(nullptr);
 }
 
@@ -161,6 +163,10 @@ juce::String AkashaAudioProcessorEditor::getCodeString() const {
 
 void AkashaAudioProcessorEditor::setCodeString(const juce::String& newText) {
 	formulaEditorPointer->setText(newText);
+}
+
+void AkashaAudioProcessorEditor::setConsoleString(const juce::String& newText) {
+	codeConsolePointer->setText(newText);
 }
 
 void AkashaAudioProcessorEditor::setMacroText(const std::array<juce::String, 8>& newText) {

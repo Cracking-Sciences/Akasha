@@ -120,10 +120,9 @@ namespace Akasha {
 
 		void setText(const juce::String& newText) {
 			code = newText;
-			{
+			if (pageLoaded){
 				emitEventIfBrowserIsVisible(SetTextEvent, newText);
 			}
-			compile();
 		}
 
 		void focusGained() {
@@ -141,13 +140,14 @@ namespace Akasha {
 		}
 
 		void paint(juce::Graphics& g) override {
-			juce::WebBrowserComponent::paint(g);
-			// if (!hasFocus) {
-			// 	juce::Colour overlayColour = juce::Colours::grey.withAlpha(0.2f);
-			// 	auto bounds = getLocalBounds();
-			// 	g.setColour(overlayColour);
-			// 	g.fillRect(bounds);
-			// }
+			if (!pageLoaded) {
+				g.fillAll(juce::Colours::black);
+				g.setColour(juce::Colours::white);
+				g.setFont(15.0f);
+				g.drawText("Loading...", getLocalBounds(), juce::Justification::centred, true);
+			} else {
+				juce::WebBrowserComponent::paint(g);
+			}
 		}
 
 		bool editAfterCompile = false;
@@ -172,17 +172,16 @@ namespace Akasha {
 
 		std::optional<Resource> getResource(const juce::String& url) {
 			auto akashaDir = getDependencyPath();
-			auto csAkashaFilesDir = akashaDir.getChildFile("editor_files");
-			if (!csAkashaFilesDir.exists())
-				csAkashaFilesDir.createDirectory();
-			auto& tempDir = csAkashaFilesDir;
-			auto htmlFile = tempDir.getChildFile("index.html");
+			auto editorFiles = akashaDir.getChildFile("editor_files");
+			if (!editorFiles.exists())
+				editorFiles.createDirectory();
+			auto htmlFile = editorFiles.getChildFile("index.html");
 			if (!htmlFile.existsAsFile()) {
-				Akasha::unpackBinaryDataToTemp(BinaryData::WebEditorPacked_pack, BinaryData::WebEditorPacked_packSize, tempDir);
+				Akasha::unpackBinaryDataToTemp(BinaryData::WebEditorPacked_pack, BinaryData::WebEditorPacked_packSize, editorFiles);
 			}
-			htmlFile = tempDir.getChildFile("index.html");
+			htmlFile = editorFiles.getChildFile("index.html");
 			const auto resourceToTetrive = url == "/" ? "index.html" : url.fromFirstOccurrenceOf("/", false, false);
-			const auto resource = tempDir.getChildFile(resourceToTetrive).createInputStream();
+			const auto resource = editorFiles.getChildFile(resourceToTetrive).createInputStream();
 			if (resource) {
 				const auto extension = resourceToTetrive.fromLastOccurrenceOf({ "." }, false, false);
 				return Resource{ streamToVector(*resource), getMimeForExtension(extension) };

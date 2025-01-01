@@ -82,6 +82,7 @@ namespace Akasha {
 		for (int i = 0; i < num_voices; i++) {
 			function_just_ready_for_voice[i] = true;
 		}
+		info = juce::String("Compiled OK :D\n");
 		return true;
 	}
 
@@ -120,12 +121,15 @@ namespace Akasha {
 			return false;
 		}
 
+		/*
 		// fill outputBuffer
 		if (outputBuffer.getNumChannels() < args.numChannels || outputBuffer.getNumSamples() < startSample + numSamples) {
 			info = juce::String("Output buffer size is insufficient.\n");
 			function_ready = false;
 			return false;
 		}
+		*/
+
 		for (int channel = 0; channel < args.numChannels; ++channel) {
 			auto& channelBuffer = cache.channelBuffers[channel];
 			if (channelBuffer.IsEmpty()) {
