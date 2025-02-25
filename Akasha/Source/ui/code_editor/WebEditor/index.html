@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor</title>
+    <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" href="node_modules/codemirror/addon/hint/show-hint.css">
+    <link rel="stylesheet" href="node_modules/codemirror/addon/fold/foldgutter.css">
+    <link rel="stylesheet" href="node_modules/codemirror/addon/dialog/dialog.css">
+
+
+    <link rel="stylesheet" href="node_modules/codemirror/theme/monokai.css">
+    <link rel="stylesheet" href="node_modules/codemirror/theme/midnight.css">
+    <link rel="stylesheet" href="node_modules/codemirror/theme/3024-night.css">
+    <link rel="stylesheet" href="node_modules/codemirror/theme/material-palenight.css">
+    <!-- <link rel="stylesheet" href="node_modules/codemirror/theme/mbo.css"> -->
+    <link rel="stylesheet" href="node_modules/codemirror/theme/paraiso-dark.css">
+    <link rel="stylesheet" href="node_modules/codemirror/theme/hopscotch.css">
+    <link rel="stylesheet" href="node_modules/codemirror/theme/night.css">
+    <link rel="stylesheet" href="node_modules/codemirror/theme/moxer.css">
+    <link rel="stylesheet" href="mbo-alt.css">
+    
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #editor {
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Custom highlight style */
+        .cm-highlight {
+            background-color: rgb(104, 104, 95);
+            /* Highlight background color */
+            color: black;
+            /* Highlight text color */
+        }
+
+        /* Global scrollbar style */
+        ::-webkit-scrollbar {
+            width: 8px;
+            /* Scrollbar width */
+            height: 8px;
+            /* Scrollbar height (for horizontal scrollbars) */
+            background-color: #3a3a3a;
+            /* Scrollbar track background color */
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #838383;
+            /* Scrollbar thumb background color */
+            border-radius: 0px;
+            /* Scrollbar thumb border radius */
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #afafaf;
+            /* Scrollbar thumb background color on hover */
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: #3a3a3a;
+            /* Scrollbar track background color */
+        }
+    </style>
+</head>
+
+<body>
+    <textarea id="editor">// JavaScript Here.</textarea>
+    <!-- Include CodeMirror necessary files -->
+    <script src="node_modules/codemirror/lib/codemirror.js"></script>
+    <script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
+    <script src="node_modules/codemirror/addon/hint/show-hint.js"></script>
+    <script src="node_modules/codemirror/addon/hint/javascript-hint.js"></script>
+    <script src="node_modules/codemirror/addon/edit/closebrackets.js"></script>
+    <script src="node_modules/codemirror/addon/fold/foldcode.js"></script>
+    <script src="node_modules/codemirror/addon/fold/foldgutter.js"></script>
+    <script src="node_modules/codemirror/addon/fold/brace-fold.js"></script>
+    <script src="node_modules/codemirror/addon/fold/comment-fold.js"></script>
+    <script src="node_modules/codemirror/addon/search/search.js"></script>
+    <script src="node_modules/codemirror/addon/search/searchcursor.js"></script>
+    <script src="node_modules/codemirror/addon/search/jump-to-line.js"></script>
+    <script src="node_modules/codemirror/addon/dialog/dialog.js"></script>
+    <script>
+        // Initialize CodeMirror editor
+        const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+            mode: { name: "javascript", globalVars: true },    // JavaScript syntax highlighting
+            lineNumbers: true,            // Display line numbers
+            styleActiveLine: true,        // Highlight the active line
+            theme: "mbo",
+            indentUnit: 4,                // Indent by 4 spaces
+            tabSize: 4,                   // Tab key width of 4 spaces
+            indentWithTabs: true,         // Use tab key for indentation
+            autoCloseBrackets: true,      // Auto close brackets and quotes
+            matchBrackets: true,
+            lineWrapping: true,           // Enable line wrapping
+            foldGutter: true,             // Enable code folding
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"], // Set line number and folding gutters
+            extraKeys: {
+                "Ctrl-Space": "autocomplete" // Trigger autocomplete with Ctrl-Space
+                // 'Ctrl-F': 'find',
+                // 'Cmd-F': 'find',
+                // "Ctrl-G": "findNext",    // Jump to the next match
+                // "Cmd-G": "findNext",     // macOS next match shortcut
+                // "Shift-Ctrl-G": "findPrev", // Jump to the previous match
+                // "Shift-Cmd-G": "findPrev",  // macOS previous match shortcut
+                // 'Ctrl-Shift-F': 'replace',
+                // 'Cmd-Shift-F': 'replace',
+            },
+            hint: CodeMirror.hint.javascript
+        });
+        window.editor = editor; // Expose editor to the global scope
+
+        // ============================================= highlight =============================================
+        // Store an array of highlighted text instances
+        let markedTextInstances = [];
+        // Clear previous highlights
+        function clearHighlights() {
+            markedTextInstances.forEach((mark) => mark.clear());
+            markedTextInstances = [];
+        }
+        // Highlight matching strings
+        function highlightMatches(word) {
+            clearHighlights(); // Clear old highlights
+            if (!word || word.trim() === "") return; // Do nothing if the word is empty
+            // Traverse all lines and find matching strings
+            editor.eachLine((line) => {
+                const lineText = line.text;
+                let startIndex = 0;
+                while ((startIndex = lineText.indexOf(word, startIndex)) !== -1) {
+                    const from = { line: line.lineNo(), ch: startIndex };
+                    const to = { line: line.lineNo(), ch: startIndex + word.length };
+                    // Highlight matching text
+                    const mark = editor.markText(from, to, { className: "cm-highlight" });
+                    markedTextInstances.push(mark);
+                    startIndex += word.length; // Move to the next match
+                }
+            });
+        }
+        // Listen for cursor activity and trigger highlighting when text is selected
+        editor.on("cursorActivity", () => {
+            const selection = editor.getSelection(); // Get selected text
+            highlightMatches(selection); // Highlight matching strings
+        });
+
+        // ============================================= Automatically trigger autocomplete =============================================
+        editor.on("inputRead", function (instance) {
+            if (instance.state.completionActive) {
+                return;
+            }
+            var cur = instance.getCursor();
+            var token = instance.getTokenAt(cur);
+            if (token.type && token.type != "comment" && token.type != "number") {
+                CodeMirror.commands.autocomplete(instance);
+            }
+        });
+
+        // ============================================= always fill the window =============================================
+        function adjustEditorSize() {
+            editor.setSize('100%', '100%');
+        }
+        window.addEventListener('resize', adjustEditorSize);
+        adjustEditorSize(); // Set initial size to fullscreen
+
+        // ============================================= draggable number! =============================================
+        let dragging = false;
+        let startX = 0;
+        let startY = 0;
+        let startValue = 0;
+        let precision = 1;
+        let token;
+        let decimalIndex = -1;
+        let tokenStart = null;
+        let tokenEnd = null;
+        let decimalPlaces = 0;
+        let rightOffset = 0;
+
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        editor.getWrapperElement().addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        editor.getWrapperElement().addEventListener('mousedown', (e) => {
+            if (e.button !== 2) return;
+            const cursor = editor.coordsChar({ left: e.clientX, top: e.clientY });
+            editor.setCursor(cursor);
+            token = editor.getTokenAt(cursor);
+            if (token.type === 'number' && /^\d+(\.\d+)?$/.test(token.string)) {
+                dragging = true;
+                startY = e.clientY;
+                startX = e.clientX;
+                startValue = parseFloat(token.string);
+                tokenStart = { line: cursor.line, ch: token.start };
+                tokenEnd = { line: cursor.line, ch: token.end };
+                const decimalPart = token.string.split('.')[1];
+                decimalPlaces = decimalPart ? decimalPart.length : 0;
+                rightOffset = token.end - cursor.ch;
+                const offset = cursor.ch - token.start;
+                decimalIndex = token.string.indexOf('.');
+                if (decimalIndex !== -1) {
+                    if (offset < decimalIndex) {
+                        precision = Math.pow(10, decimalIndex - offset);
+                    } else if (offset > decimalIndex) {
+                        precision = Math.pow(10, decimalIndex - offset + 1);
+                    }else {
+                        precision = 1;
+                    }
+                } else {
+                    precision = Math.pow(10, token.string.length - offset);
+                }
+            }
+            const cursorPos = {
+                line: tokenStart.line,
+                ch: tokenEnd.ch - rightOffset,
+            };
+            editor.setCursor(cursorPos);
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            dragging = false;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            const threshold = 4;
+            const deltaY = startY - e.clientY - (startX - e.clientX);
+            if (Math.abs(deltaY) >= threshold) {
+                const changeSteps = Math.floor(deltaY / threshold);
+                let newValue = startValue + changeSteps * precision;
+                if (newValue < 0) {
+                    newValue = 0;
+                }
+                const newToken = newValue.toFixed(Math.max(0, decimalPlaces));
+                const currentLine = editor.getLine(tokenStart.line);
+                const beforeToken = currentLine.slice(0, tokenStart.ch);
+                const afterToken = currentLine.slice(tokenEnd.ch);
+                const updatedLine = beforeToken + newToken + afterToken;
+                editor.replaceRange(updatedLine, { line: tokenStart.line, ch: 0 }, { line: tokenStart.line, ch: currentLine.length });
+                startValue = newValue;
+                console.log('new value:', newValue);
+                tokenEnd.ch = tokenStart.ch + newToken.length;
+                startY = e.clientY;
+                startX = e.clientX;
+            }
+            const cursorPos = {
+                line: tokenStart.line,
+                ch: tokenEnd.ch - rightOffset,
+            };
+            editor.setCursor(cursorPos);
+            // live coding
+            if (window.focusLost) {
+                window.focusLost().then((result) => {
+                    console.log(result);
+                }).catch((err) => console.error(err));
+            }
+        });
+
+    </script>
+    <script type="module">
+        import { getNativeFunction } from "./juce/index.js";
+        console.log(window.__JUCE__.backend);
+        try {
+            // Listen for editor changes
+            const edited = getNativeFunction("edited");
+            editor.on("change", () => {
+                console.log("[Editor Changed] ");
+                edited().then((result) => {
+                    // console.log(result);
+                }).catch((error) => {
+                    console.error("Failed to notify native function:", error);
+                });
+            });
+            // Focus and blur events
+            const focusGained = getNativeFunction("focusGained");
+            const focusLost = getNativeFunction("focusLost");
+            window.focusLost = focusLost;
+            editor.on("focus", () => {
+                console.log("[Focus Gained] ");
+                focusGained().then((result) => {
+                    // console.log(result);
+                });
+            });
+            editor.on("blur", () => {
+                console.log("[Focus Lost] ");
+                focusLost().then((result) => {
+                    // console.log(result);
+                });
+            });
+            // setText
+            window.__JUCE__.backend.addEventListener(
+                "setText",
+                (newText) => {
+                    console.log("Backend is setting code");
+                    editor.setValue(newText);
+                }
+            )
+        } catch (error) {
+            console.error("An error occurred while setting up event listeners:", error);
+            editor.setValue("Error: Failed to set up event listeners.");
+        }
+    </script>
+</body>
+
+</html>
